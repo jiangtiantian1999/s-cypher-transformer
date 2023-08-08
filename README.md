@@ -1,4 +1,4 @@
-# S-Cypher Translator
+# S-Cypher Transformer
 
 This repository holds a transformer that transforms S-Cypher to other graph query languages (currently only Cypher).
 
