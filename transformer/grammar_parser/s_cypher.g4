@@ -1,5 +1,5 @@
-grammar S_Cypher;
-import Cypher;
+grammar s_cypher;
+import cypher;
 
 oC_Query : oC_RegularQuery
          | oC_StandaloneCall
