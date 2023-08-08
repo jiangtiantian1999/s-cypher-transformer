@@ -1,7 +1,7 @@
 from datetime import date
 
 from ir.s_datetime import Interval
-from ir.SNode import SNode
+from ir.s_graph import SNode
 
 
 def main():
