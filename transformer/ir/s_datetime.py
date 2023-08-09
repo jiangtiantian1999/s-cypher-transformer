@@ -10,37 +10,54 @@ class TimePoint:
 
 
 class Date(TimePoint):
-    date_pattern = "(?P<year>\d{4})(-?((?P<month>\d{2})(-?((?P<day_of_month>\d{2}))?)|" \
+    date_pattern = "(?P<year>\d{4})(-?((?P<month>\d{2})(-?((?P<day>\d{2}))?)|" \
                    "(W(?P<week>\d{2})(-?(?P<day_of_week>\d))?)|" \
                    "(Q(?P<quarter>\d)(-?(?P<day_of_quarter>\d{2}))?)|" \
-                   "(?P<day_of_year>\d{3})))?"
+                   "(?P<ordinal_day>\d{3})))?"
 
-    def __init__(self, date_expression: str = None):
-        if date_expression:
+    def __init__(self, date_input=None):
+        if isinstance(date_input, str):
             date_pattern = '^[ ]*' + self.date_pattern + '[ ]*$'
-            if re.match(date_pattern, date_expression):
-                date_info = re.search(date_pattern, date_expression)
+            if re.match(date_pattern, date_input):
+                date_info = re.search(date_pattern, date_input)
                 self.date = self.date_parse(date_info)
             else:
                 raise FormatError('The format of the date string is incorrect')
-        else:
+        elif isinstance(date_input, dict):
+            for key in ['year', 'month', 'day', 'week', 'day_of_week', 'quarter', 'day_of_quarter', 'ordinal_day']:
+                date_input.setdefault(key, None)
+            # 至少指定year
+            if date_input['year']:
+                if int(date_input['month'] is not None) + int(date_input['week'] is not None) + int(
+                        date_input['quarter'] is not None) + int(date_input['ordinal_day'] is not None) > 1:
+                    raise FormatError('The combination of the date components is incorrect')
+                if (date_input['day'] and not date_input['month']) or (
+                        date_input['day_of_week'] and not date_input['week']) or (
+                        date_input['day_of_quarter'] and not date_input['quarter']):
+                    raise FormatError('The combination of the date components is incorrect')
+                self.date = self.date_parse(date_input)
+            else:
+                raise FormatError('The combination of the date components is incorrect')
+        elif date_input is None:
             self.date = datetime.now().date()
+        else:
+            raise TypeError('The type of the date input is wrong')
 
     @staticmethod
     def date_parse(date_info):
-        data_string = date_info['year']
+        data_string = str(date_info['year']).rjust(4, '0')
         data_pattern = '%Y'
         if date_info['month']:
-            if not date_info['day_of_month']:
-                data_string = data_string + date_info['month'] + '01'
+            if not date_info['day']:
+                data_string = data_string + str(date_info['month']).rjust(2, '0') + '01'
             else:
-                data_string = data_string + date_info['month'] + date_info['day_of_month']
+                data_string = data_string + str(date_info['month']).rjust(2, '0') + str(date_info['day']).rjust(2, '0')
             data_pattern = data_pattern + '%m%d'
         elif date_info['week']:
             if not date_info['day_of_week']:
-                data_string = data_string + str(int(date_info['week']) - 1) + '1'
+                data_string = data_string + str(int(date_info['week']) - 1).rjust(2, '0') + '1'
             else:
-                data_string = data_string + str(int(date_info['week']) - 1) + date_info['day_of_week']
+                data_string = data_string + str(int(date_info['week']) - 1).rjust(2, '0') + date_info['day_of_week']
             data_pattern = data_pattern + '%W%u'
         elif date_info['quarter']:
             if not date_info['day_of_quarter']:
@@ -66,10 +83,10 @@ class Date(TimePoint):
             data_string = data_string + str(month).rjust(2, '0') + str(day_of_month).rjust(2, '0')
             data_pattern = data_pattern + '%m%d'
         else:
-            if not date_info['day_of_year']:
+            if not date_info['ordinal_day']:
                 data_string = data_string + '001'
             else:
-                data_string = data_string + date_info['day_of_year']
+                data_string = data_string + str(date_info['ordinal_day']).rjust(3, '0')
             data_pattern = data_pattern + '%j'
         return datetime.strptime(data_string, data_pattern).date()
 
@@ -83,16 +100,34 @@ class Time(TimePoint):
     timezone_pattern = "(?P<Z>Z)|(\[(?P<zone_name1>[\w/]+)\])|(((?P<plus>\+)|(?P<minus>-))(?P<hours>\d{2})(:?(?P<minutes>\d{2}))?(\[(?P<zone_name2>[\w/]+)\])?)"
     global_time_pattern = 'T?(?P<time>(' + time_pattern + '))[ ]*(?P<timezone>(' + timezone_pattern + '))?'
 
-    def __init__(self, time_expression: str = None):
-        if time_expression:
-            time_info = self.global_time_parse(time_expression)
+    def __init__(self, time_input=None):
+        if isinstance(time_input, str):
+            time_info = self.global_time_parse(time_input)
             self.time = self.time_parse(time_info)
             if time_info["timezone"]:
                 self.time = self.time.replace(tzinfo=self.timezone_parse(time_info))
             else:
                 self.time = self.time.replace(tzinfo=timezone.utc)
-        else:
+        elif isinstance(time_input, dict):
+            for key in ['hour', 'minute', 'second', 'millisecond', 'microsecond', 'timezone']:
+                time_input.setdefault(key, None)
+            # 至少指定hour或timezone
+            if time_input['hour']:
+                if time_input['millisecond']:
+                    if not time_input['microsecond']:
+                        time_input['microsecond'] = 0
+                    time_input['microsecond'] = time_input['microsecond'] + time_input['millisecond'] * 1000
+                self.time = self.time_parse(time_input)
+            elif time_input['minute'] or time_input['second'] or time_input['millisecond'] or time_input['microsecond']:
+                raise FormatError('The combination of the time components is incorrect')
+            else:
+                self.time = datetime.now(timezone.utc).time()
+            if time_input['timezone']:
+                self.time = self.time.replace(tzinfo=self.timezone_parse(time_input['timezone']))
+        elif time_input is None:
             self.time = datetime.now(timezone.utc).time()
+        else:
+            raise TypeError('The type of the time input is wrong')
 
     def global_time_parse(self, global_time_expression):
         global_time_pattern = '^[ ]*' + self.global_time_pattern + '[ ]*$'
@@ -109,7 +144,7 @@ class Time(TimePoint):
         if time_info['second']:
             second = int(time_info['second'])
         if time_info['microsecond']:
-            microsecond = int(time_info['microsecond'].ljust(6, '0'))
+            microsecond = int(str(time_info['microsecond']).ljust(6, '0'))
         return time(hour=int(time_info['hour']), minute=minute, second=second, microsecond=microsecond)
 
     @staticmethod
@@ -143,11 +178,25 @@ class Time(TimePoint):
 
 class LocalTime(TimePoint):
 
-    def __init__(self, localtime_expression: str = None):
-        if localtime_expression:
-            self.time = self.localtime_parse(localtime_expression)
-        else:
+    def __init__(self, localtime_input=None):
+        if isinstance(localtime_input, str):
+            self.time = self.localtime_parse(localtime_input)
+        elif isinstance(localtime_input, dict):
+            for key in ['hour', 'minute', 'second', 'millisecond', 'microsecond']:
+                localtime_input.setdefault(key, None)
+            if localtime_input['hour']:
+                if localtime_input['millisecond']:
+                    if not localtime_input['microsecond']:
+                        localtime_input['microsecond'] = 0
+                    localtime_input['microsecond'] = localtime_input['microsecond'] + localtime_input[
+                        'millisecond'] * 1000
+                self.time = Time.time_parse(localtime_input)
+            else:
+                raise FormatError('The combination of the time components is incorrect')
+        elif localtime_input is None:
             self.time = datetime.now().time()
+        else:
+            raise TypeError('The type of the localtime input is wrong')
 
     def localtime_parse(self, localtime_expression):
         localtime_pattern = '^[ ]*' + Time.time_pattern + '[ ]*$'
@@ -164,11 +213,42 @@ class LocalTime(TimePoint):
 class DateTime(TimePoint):
     datetime_pattern = '(?P<date>' + Date.date_pattern + ')((?P<time>[ ]*(T| )[ ]*(' + Time.time_pattern + '))[ ]*(?P<timezone>(' + Time.timezone_pattern + '))?)?'
 
-    def __init__(self, datetime_expression: str = None):
-        if datetime_expression:
-            self.datetime = self.datetime_parse(datetime_expression)
-        else:
+    def __init__(self, datetime_input=None):
+        if isinstance(datetime_input, str):
+            self.datetime = self.datetime_parse(datetime_input)
+        elif isinstance(datetime_input, dict):
+            for key in ['year', 'month', 'day', 'week', 'day_of_week', 'quarter', 'day_of_quarter', 'ordinal_day',
+                        'hour', 'minute', 'second', 'millisecond', 'microsecond', 'timezone']:
+                datetime_input.setdefault(key, None)
+            # 至少指定year或timezone
+            if datetime_input['year']:
+                if int(datetime_input['month'] is not None) + int(datetime_input['week'] is not None) + int(
+                        datetime_input['quarter'] is not None) + int(datetime_input['ordinal_day'] is not None) > 1:
+                    raise FormatError('The combination of the date components is incorrect')
+                if (datetime_input['day'] and not datetime_input['month']) or (
+                        datetime_input['day_of_week'] and not datetime_input['week']) or (
+                        datetime_input['day_of_quarter'] and not datetime_input['quarter']):
+                    raise FormatError('The combination of the date components is incorrect')
+                date_var = Date.date_parse(datetime_input)
+                if datetime_input['millisecond']:
+                    if not datetime_input['microsecond']:
+                        datetime_input['microsecond'] = 0
+                    datetime_input['microsecond'] = datetime_input['microsecond'] + datetime_input['millisecond'] * 1000
+                time_var = Time.time_parse(datetime_input)
+                self.datetime = datetime.combine(date_var, time_var)
+            elif datetime_input['month'] or datetime_input['day'] or datetime_input['week'] or datetime_input[
+                'day_of_week'] or datetime_input['quarter'] or datetime_input['day_of_quarter'] or datetime_input[
+                'ordinal_day'] or datetime_input['hour'] or datetime_input['minute'] or datetime_input['second'] or \
+                    datetime_input['millisecond'] or datetime_input['microsecond']:
+                raise FormatError('The combination of the datetime components is incorrect')
+            else:
+                self.datetime = datetime.now(timezone.utc)
+            if datetime_input['timezone']:
+                self.datetime = self.datetime.replace(tzinfo=Time.timezone_parse(datetime_input['timezone']))
+        elif datetime_input is None:
             self.datetime = datetime.now(timezone.utc)
+        else:
+            raise TypeError('The type of the datetime input is wrong')
 
     def datetime_parse(self, datetime_expression):
         datetime_pattern = '^[ ]*' + self.datetime_pattern + '[ ]*$'
@@ -191,11 +271,37 @@ class DateTime(TimePoint):
 class LocalDateTime(TimePoint):
     localdatetime_pattern = '(?P<date>' + Date.date_pattern + ')(?P<time>[ ]*(T| )[ ]*(' + Time.time_pattern + '))?'
 
-    def __init__(self, localdatetime_expression: str = None):
-        if localdatetime_expression:
-            self.datetime = self.localdatetime_parse(localdatetime_expression)
-        else:
+    def __init__(self, localdatetime_input=None):
+        if isinstance(localdatetime_input, str):
+            self.datetime = self.localdatetime_parse(localdatetime_input)
+        elif isinstance(localdatetime_input, dict):
+            for key in ['year', 'month', 'day', 'week', 'day_of_week', 'quarter', 'day_of_quarter', 'ordinal_day',
+                        'hour', 'minute', 'second', 'millisecond', 'microsecond']:
+                localdatetime_input.setdefault(key, None)
+            # 至少指定year
+            if localdatetime_input['year']:
+                if int(localdatetime_input['month'] is not None) + int(localdatetime_input['week'] is not None) + int(
+                        localdatetime_input['quarter'] is not None) + int(
+                    localdatetime_input['ordinal_day'] is not None) > 1:
+                    raise FormatError('The combination of the date components is incorrect')
+                if (localdatetime_input['day'] and not localdatetime_input['month']) or (
+                        localdatetime_input['day_of_week'] and not localdatetime_input['week']) or (
+                        localdatetime_input['day_of_quarter'] and not localdatetime_input['quarter']):
+                    raise FormatError('The combination of the date components is incorrect')
+                date_var = Date.date_parse(localdatetime_input)
+                if localdatetime_input['millisecond']:
+                    if not localdatetime_input['microsecond']:
+                        localdatetime_input['microsecond'] = 0
+                    localdatetime_input['microsecond'] = localdatetime_input['microsecond'] + localdatetime_input[
+                        'millisecond'] * 1000
+                time_var = Time.time_parse(localdatetime_input)
+                self.datetime = datetime.combine(date_var, time_var)
+            else:
+                raise FormatError('The combination of the localdatetime components is incorrect')
+        elif localdatetime_input is None:
             self.datetime = datetime.now()
+        else:
+            raise TypeError('The type of the localdatetime input is wrong')
 
     def localdatetime_parse(self, localdatetime_expression):
         localdatetime_pattern = '^[ ]*' + self.localdatetime_pattern + '[ ]*$'
@@ -214,13 +320,38 @@ class LocalDateTime(TimePoint):
 
 
 class Duration:
+    # 与Cypher不同（没有年属性、月属性和季节属性）
     duration_pattern = 'P([ ]*(?P<weeks>[\d]{1,64})W)?([ ]*(?P<days>[\d]{1,64})D)?([ ]*(?P<hours>[\d]{1,64})H)?([ ]*(?P<minutes>[\d]{1,64})M)?([ ]*(?P<seconds>[\d]{1,64})((.|,)([\d]{1,6}))?S)?'
 
-    def __init__(self, duration_expression: str = None):
-        if duration_expression:
-            self.duration = self.duration_parse(duration_expression)
-        else:
+    def __init__(self, duration_input=None):
+        if isinstance(duration_input, str):
+            self.duration = self.duration_parse(duration_input)
+        elif isinstance(duration_input, dict):
+            for key in ['weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds', 'microseconds']:
+                duration_input.setdefault(key, None)
+            # 至少拥有一个组件
+            if not (duration_input['weeks'] or duration_input['days'] or duration_input['hours'] or duration_input[
+                'minutes'] or duration_input['seconds'] or duration_input['milliseconds'] or duration_input['microseconds']):
+                raise FormatError('At least one component')
             self.duration = timedelta()
+            if duration_input['weeks']:
+                self.duration = self.duration + timedelta(weeks=int(duration_input['weeks']))
+            if duration_input['days']:
+                self.duration = self.duration + timedelta(days=int(duration_input['days']))
+            if duration_input['hours']:
+                self.duration = self.duration + timedelta(hours=int(duration_input['hours']))
+            if duration_input['minutes']:
+                self.duration = self.duration + timedelta(minutes=int(duration_input['minutes']))
+            if duration_input['seconds']:
+                self.duration = self.duration + timedelta(seconds=float(duration_input['seconds']))
+            if duration_input['milliseconds']:
+                self.duration = self.duration +  timedelta(milliseconds=float(duration_input['milliseconds']))
+            if duration_input['microseconds']:
+                self.duration = self.duration +  timedelta(microseconds=float(duration_input['microseconds']))
+        elif duration_input is None:
+            self.duration = timedelta()
+        else:
+            raise TypeError('The type of the duration input is wrong')
 
     def duration_parse(self, duration_expression):
         duration_pattern = '^[ ]*' + self.duration_pattern + '[ ]*$'
