@@ -1,13 +1,14 @@
-from datetime import date
-
-from ir.s_datetime import Interval
-from ir.s_graph import SNode
+import traceback
+from transformer.exceptions.datetime_exception import DatetimeException
 
 
 def main():
-    interval = Interval(date(2000,1,1),date(2010,1,1))
-    node = SNode(1, 'OBJECT', 'person', interval)
-    print(node.node_id)
+    try:
+        pass
+    except DatetimeException as e:
+        print(traceback.format_exc())
+        print(e.__class__.__name__, ":", e)
+
 
 if __name__ == '__main__':
     main()
