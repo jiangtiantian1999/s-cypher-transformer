@@ -19,3 +19,7 @@ class SEdge:
         self.properties = properties
         if properties is None:
             self.properties = {}
+
+
+class SPath:
+    pass
