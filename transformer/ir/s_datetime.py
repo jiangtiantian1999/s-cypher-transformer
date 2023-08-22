@@ -4,6 +4,8 @@ from tzlocal import get_localzone
 import pytz
 import calendar
 import re
+import enum
+import numpy as np
 
 
 
@@ -94,6 +96,30 @@ class Date(TimePoint):
 
     def __str__(self):
         return str(self.date)
+    
+    # Get the current Date instant using the statement clock.
+    def statement():
+        pass
+
+    # Truncate the input temporal value to a Date instant using the specified unit.
+    @staticmethod
+    def truncate(unit, temporalInstantValue, mapOfComponents, defaultZone):
+        # 截断时间点指的是对一个时间点在某个时间单位处截断，以得到一个新的时间点。
+        # 在这个新的时间点中，所有比截断单位小的时间单位均设为默认值，
+        # 截断单位及比其大的时间单位的值均不变。
+        # 在这个基础上，也可以通过一个map指定组件，以更改截断后的时间点。
+        date_input = temporalInstantValue
+        localDate = date_input.getDatePart()
+        truncated = date(truncateTo(localDate, unit))
+        if mapOfComponents.size() == 0:
+                return truncated
+        else:
+            updatedFields = mapOfComponents.updatedWith("date", truncated)
+            return build(updatedFields, defaultZone)
+            
+        # return temporalTruncate(unit, temporalInstantValue, mapOfComponents);
+        
+        
 
 
 class Time(TimePoint):
@@ -366,6 +392,57 @@ class Duration:
 
     def __str__(self):
         return str(self.duration)
+    
+    @staticmethod
+    def create(var0, var2):
+        if var0 | var2 == 0:
+            return Duration(0, 0)
+        else:
+            return Duration(var0, var2)
+
+    @staticmethod
+    def ofDays(var0):
+      return Duration.create(var0 * 86400, 0)
+
+    @staticmethod
+    def ofHours(var0):
+      return Duration.create(var0 * 3600, 0)
+
+
+    @staticmethod
+    def ofMinutes(var0):
+      return Duration.create(var0 * 60, 0)
+
+
+    @staticmethod
+    def ofSeconds(var0):
+      return Duration.create(var0, 0)
+
+
+    @staticmethod
+    def ofSeconds(var0, var2):
+      var4 = np.add(var0, np.floor_divide(var2, 1000000000))
+      var6 = (int)(np.fmod(var2, 1000000000))
+      return Duration.create(var4, var6)
+
+
+    @staticmethod
+    def ofMillis(var0):
+      var2 = var0 / 1000
+      var4 = int(var0 % 1000)
+      if (var4 < 0):
+         var4 += 1000
+         var2 -=1
+      return Duration.create(var2, var4 * 1000000)
+
+    @staticmethod
+    def ofNanos(var0):
+        var2 = var0 / 1000000000
+        var4 = int(var0 % 1000000000)
+        if var4 < 0:
+            var4 = int(var4 + 1000000000)
+            var2 -=1
+        return Duration.create(var2, var4)
 
 
 class Interval:
@@ -379,3 +456,102 @@ class Interval:
 
     def __str__(self):
         return '(' + str(self.interval_from) + ', ' + str(self.interval_to) + ')'
+
+
+class TemporalUnit(enum.Enum):
+    MILLENNIA = "Millennia", Duration.ofSeconds(31556952000)
+    CENTURY = "Century", Duration.ofSeconds(3155695200)
+    YEAR = "Year", Duration.ofSeconds(31556952)
+    MONTH = "Month", Duration.ofSeconds(2629746)
+    WEEK = "Week", Duration.ofSeconds(604800)
+    DAY = "Day", Duration.ofSeconds(86400)
+    HOUR = "Hour", Duration.ofSeconds(3600)
+    MINUTE = "Minute", Duration.ofSeconds(60)
+    SECOND = "Second", Duration.ofSeconds(1)
+    MILLIS = "Millisecond", Duration.ofNanos(1000000)
+    MICROS = "Microsecond", Duration.ofNanos(1000)
+
+    def __init__(self, _name, duration):
+        self._name = _name
+        self.duration = duration
+
+    def getDuration(self):
+        return self.duration
+
+
+class TemporalField(enum.Enum):
+    WEEK_OF_YEAR = "weekYear", TemporalUnit.WEEK, 53
+    QUARTER_OF_YEAR = "quarter", TemporalUnit.MONTH, 3
+    YEAR_OF_CENTURY = "Year of century", TemporalUnit.YEAR, TemporalUnit.CENTURY, 100
+    YEAR_OF_MILLENNIUM = "Millennium", TemporalUnit.YEAR, TemporalUnit.MILLENNIA, 1000
+
+    def __init__(self, _name, baseUnit, rangeUnit, years, range):
+        self._name = _name
+        self.baseUnit = baseUnit
+        self.rangeUnit = rangeUnit
+        self.years = years
+        self.range = range(datetime.MINYEAR / years, datetime.MAXYEARE / years)
+
+    @property
+    def getName(self):
+        return self._name
+    
+    @property
+    def getBaseUnit(self):
+        return self.baseUnit
+    
+    @property
+    def getRangeUnit(self):
+        return self.rangeUnit
+    
+    @property
+    def getRange(self):
+        return self.range
+    
+
+@staticmethod
+def truncateTo(value, unit):
+        if unit == 'MILLENNIUM':
+            return (TemporalField.YEAR_OF_MILLENNIUM, 0)
+        # ----------------------
+        elif unit =='CENTURY':
+            return (TemporalField.YEAR_OF_CENTURY, 0)
+        elif unit =='YEAR':
+            return (TemporalUnit.YEAR, 0)
+        elif unit =='WEEKYEAR':
+            return (TemporalField.WEEK_OF_YEAR, 0)
+        elif unit =='QUATER':
+            return (TemporalField.QUARTER_OF_YEAR, 0)
+        elif unit =='MONTH':
+            return (TemporalUnit.MONTH, 0)
+        elif unit =='WEEK':
+            return (TemporalUnit.WEEK, 0)
+        elif unit =='DAY':
+            return value
+        elif unit =='HOUR':
+            return (TemporalUnit.HOUR, 0)
+        elif unit =='MINUTE':
+            return (TemporalUnit.MINUTE, 0)
+        elif unit =='SECOND':
+            return (TemporalUnit.SECOND, 0)
+        elif unit =='MILLIS':
+            return (TemporalUnit.MILLIS, 0)
+        elif unit =='MICROS':
+            return (TemporalUnit.MICROS, 0)
+
+        
+        # ----------------------
+      
+        # elif unit == 'YEARS':
+        #     return value.with(TemporalAdjusters.firstDayOfYear())
+        # elif unit == IsoFields.WEEK_BASED_YEARS:
+        #     return value.with(IsoFields.WEEK_OF_WEEK_BASED_YEAR, 1).with(ChronoField.DAY_OF_WEEK, 1)
+        # elif unit == IsoFields.QUARTER_YEARS:
+        #     return value.with(IsoFields.DAY_OF_QUARTER, 1)
+        # elif unit == 'MONTHS':
+        #     return value.with(TemporalAdjusters.firstDayOfMonth())
+        # elif unit == WEEKS:
+        #     return value.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+
+        # else:
+        #     raise UnsupportedTemporalUnitException("Unit too small for truncation: " + unit)
