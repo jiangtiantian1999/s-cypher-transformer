@@ -1,4 +1,4 @@
-class SCypherEntity:
+class SCypherClause:
     # variables in query
     vars = []
     pass
