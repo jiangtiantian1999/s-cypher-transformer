@@ -6,9 +6,26 @@ import calendar
 import re
 
 
-
 class TimePoint:
     pass
+
+
+class NOW(TimePoint):
+
+    @property
+    def hour(self):
+        """hour (0-23)"""
+        return self._hour
+
+    def __getattr__(self, item):
+        if item == 'name':
+            print("hooo")
+
+    # def __getattribute__(self, name):
+    #     return "heoo"
+
+    def __str__(self):
+        return str(self.date)
 
 
 class Date(TimePoint):
@@ -121,6 +138,8 @@ class Time(TimePoint):
             # 至少指定hour或timezone
             if time_input['hour']:
                 if time_input['millisecond']:
+                    if time_input['millisecond'] > 999:
+                        raise ValueError('Millisecond must be in 0..999')
                     if not time_input['microsecond']:
                         time_input['microsecond'] = 0
                     time_input['microsecond'] = time_input['microsecond'] + time_input['millisecond'] * 1000
