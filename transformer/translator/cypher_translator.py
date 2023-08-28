@@ -1,10 +1,10 @@
 from s_cypher_walker import SCypherWalker
-from transformer.ir.s_cypher_entity import SCypherEntity
+from transformer.ir.s_cypher_clause import SCypherClause
 
 
 class CypherTranslator:
     @staticmethod
-    def translate_s_cypher_query(s_cypher_walker: SCypherWalker) -> SCypherEntity:
+    def translate_s_cypher_query(s_cypher_walker: SCypherWalker) -> SCypherClause:
         pass
 
     @staticmethod
