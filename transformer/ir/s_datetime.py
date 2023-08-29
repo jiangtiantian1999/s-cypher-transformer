@@ -1,4 +1,4 @@
-from transformer.exceptions.datetime_exception import FormatError, ValueError, TimeZoneError, TypeError
+from transformer.exceptions.s_exception import FormatError, TimeZoneError
 from datetime import date, time, datetime, timezone, timedelta
 from tzlocal import get_localzone
 import pytz
@@ -28,6 +28,14 @@ class TimePoint:
             return datetime.now(timezone.utc)
         elif self.time_point_type == self.LOCALDATETIME:
             return datetime.now(get_localzone())
+
+    def min(self):
+        if self.time_point_type == self.DATE:
+            return date.min
+        elif self.time_point_type in [self.TIME, self.LOCALTIME]:
+            return time.min
+        elif self.time_point_type in [self.DATETIME, self.LOCALDATETIME]:
+            return datetime.min
 
     def timestamp(self):
         now = self.now()
