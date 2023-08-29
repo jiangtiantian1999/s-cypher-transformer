@@ -1,39 +1,35 @@
-class SCypherClause:
-    # variables in query
-    vars = []
+from typing import List
+
+from transformer.ir.s_clause_component import Pattern
+from transformer.ir.s_datetime import TimePoint, Interval
+
+
+class Clause:
+    time_granularity = TimePoint.LOCALDATETIME
+
+
+class WhereClause(Clause):
     pass
 
 
-class MatchClause:
-    # Store all the nodes in the MATCH clause.
-    nodes = []
-    # Store all the edges in the MATCH clause.
-    edges = []
-    # Store all the paths.
-    paths = []
-    # keep track of the order
+class ReturnClause(Clause):
+    pass
+
+
+class MatchClause(Clause):
     internalID = 0
 
-    def __init__(self, nodes, edges, paths):
-        self.nodes = nodes
-        self.edges = edges
-        self.paths = paths
-        self.internalID = 0
+    def __init__(self, patterns: List[Pattern], where_clause: WhereClause = None,
+                 time_window: TimePoint | Interval = None):
+        self.patterns = patterns
+        self.where_clause = where_clause
+        self.time_window = time_window
 
-    def getNodes(self):
-        return self.nodes
-
-    def setNodes(self, nodes):
-        self.nodes = nodes
-
-    def getEdges(self):
-        return self.edges
-
-    def setEdges(self, edges):
-        self.edges = edges
-
-    def getPaths(self):
-        return self.paths
+    def get_variables(self):
+        variables = []
+        for pattern in self.patterns:
+            variables = variables.extend(pattern.get_variables())
+        return variables
 
     def getInternalID(self):
         self.internalID += 1
@@ -43,56 +39,19 @@ class MatchClause:
         self.internalID = 0
 
     # Prints out information about the nodes and edges in the MATCH clause.
-    def __str__(self):
-        str_ = "NODES IN MATCH CLAUSE:\n"
-        for i in range(len(self.nodes)):
-            str_ += str(self.nodes[i]) + "\n"
-        str_ += "RELATIONSHIPS IN MATCH CLAUSE:\n"
-        for i in range(len(self.edges)):
-            str_ += str(self.edges[i]) + "\n"
-        return str_
+    # def __str__(self):
+    #     str_ = "NODES IN MATCH CLAUSE:\n"
+    #     for i in range(len(self.nodes)):
+    #         str_ += str(self.nodes[i]) + "\n"
+    #     str_ += "RELATIONSHIPS IN MATCH CLAUSE:\n"
+    #     for i in range(len(self.edges)):
+    #         str_ += str(self.edges[i]) + "\n"
+    #     return str_
 
 
-class WhereClause:
-    pass
+class SCypherClause(Clause):
 
-
-class ReturnClause:
-    vars = []
-    pass
-
-
-class CreateClause:
-    pass
-
-
-class DeleteClause:
-    pass
-
-
-class SetClause:
-    pass
-
-
-class RemoveClause:
-    pass
-
-
-class StaleClause:
-    pass
-
-
-class AtTimeClause:
-    pass
-
-
-class BetweenClause:
-    pass
-
-
-class SnapShotClause:
-    pass
-
-
-class ScopeClause:
-    pass
+    def __init__(self, match_clauses: List[MatchClause], return_clause):
+        self.match_clauses = match_clauses
+        self.return_clause = return_clause
+        pass
