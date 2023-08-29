@@ -1,4 +1,4 @@
-from s_cypher_walker import SCypherWalker
+from transformer.translator.s_cypher_walker import SCypherWalker
 from transformer.ir.s_cypher_clause import SCypherClause
 
 
