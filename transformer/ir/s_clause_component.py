@@ -22,4 +22,6 @@ class Pattern:
         if self.path is not None:
             return self.path.get_variables()
         else:
-            return [self.temporal_path_call.variable].append(self.temporal_path_call.path.get_variables())
+            variables = [self.temporal_path_call.variable]
+            variables.extend(self.temporal_path_call.path.get_variables())
+            return variables

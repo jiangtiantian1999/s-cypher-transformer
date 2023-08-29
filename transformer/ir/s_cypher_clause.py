@@ -28,7 +28,7 @@ class MatchClause(Clause):
     def get_variables(self):
         variables = []
         for pattern in self.patterns:
-            variables = variables.extend(pattern.get_variables())
+            variables.extend(pattern.get_variables())
         return variables
 
     def getInternalID(self):
