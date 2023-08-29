@@ -1,4 +1,3 @@
-from transformer.exceptions.datetime_exception import ValueError
 from s_datetime import TimePoint, Interval
 
 
