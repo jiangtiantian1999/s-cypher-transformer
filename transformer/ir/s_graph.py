@@ -23,10 +23,25 @@ class SNode:
                  properties: List[SProperty] = None):
         # 属性节点变量名称
         self.variable = variable
-        self.labels = ['Object'].extend(labels)
+        if labels is None:
+            labels = []
+        self.labels = ['Object'] + labels
         self.content = content
         self.interval = interval
+        if properties is None:
+            properties = []
         self.properties = properties
+
+    def __str__(self):
+        result = ''
+        if self.variable:
+            result = self.variable
+        for label in self.labels:
+            result = result + ':' + label
+        if self.content:
+            result = '{content:' + self.content +'}'
+        result = '(' + result + ')'
+        return result
 
 
 class SEdge:
@@ -35,16 +50,47 @@ class SEdge:
     UNDIRECTED = 'UNDIRECTED'
 
     def __init__(self, direction, variable: str = None, labels: List[str] = None, length: Tuple[int, int] = (1, 1),
-                 content=None, interval: Interval = None, properties: dict = None):
+                 interval: Interval = None, properties: dict = None):
         if direction not in [self.LEFT, self.RIGHT, self.UNDIRECTED]:
             raise ValueError("Direction of edges must in 'LEFT', 'RIGHT' and 'UNDIRECTED'.")
+        if length[0] < 0 or length[0] > length[1]:
+            raise ValueError("The length range of edge is incorrect.")
         self.direction = direction
         self.variable = variable
-        self.labels = labels
+        if labels is None:
+            labels = []
+        self.labels = labels  # 相当于content
         self.length = length
-        self.content = content
         self.interval = interval
         self.properties = properties
+
+    def __str__(self):
+        result = ""
+        if self.variable:
+            result = self.variable
+        for label in self.labels:
+            result = result + ':' + label
+        if self.length[0] != 1 or self.length[1] != 1:
+            if self.length[0] == self.length[1]:
+                result = result + '*' + str(self.length[0])
+            else:
+                result = result + '*' + str(self.length[0]) + '..' + str(self.length[1])
+        if len(self.properties) != 0:
+            result = result + '{'
+            for index, (key, value) in enumerate(self.properties.items()):
+                if index != 0:
+                    result = result + ','
+                result = result + key + ":" + str(value)
+            result = result + '}'
+        if self.variable or self.labels or self.length[0] != 1 or self.length[1] != 1 or self.properties:
+            result = '-[' + result + ']-'
+        else:
+            result = '-' + result + '-'
+        if self.direction == self.LEFT:
+            result = '<' + result
+        elif self.direction == self.RIGHT:
+            result = result + '>'
+        return result
 
 
 class SPath:
