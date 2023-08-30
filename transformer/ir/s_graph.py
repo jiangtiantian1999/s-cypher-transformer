@@ -4,33 +4,16 @@ from transformer.exceptions.s_exception import GraphError
 from transformer.ir.s_datetime import Interval
 
 
-class SProperty:
-    def __init__(self, property_name: str, property_value, name_interval: Interval = None,
-                 value_interval: Interval = None):
-        # 属性名
-        self.property_name = property_name
-        # 属性值
-        self.property_value = property_value
-        # 属性节点有效时间
-        self.name_interval = name_interval
-        # 值节点有效时间
-        self.value_interval = value_interval
-
-
 class SNode:
-
-    def __init__(self, variable: str = None, labels: List[str] = None, content=None, interval: Interval = None,
-                 properties: List[SProperty] = None):
-        # 属性节点变量名称
-        self.variable = variable
-        if labels is None:
-            labels = []
-        self.labels = ['Object'] + labels
+    def __init__(self, labels: List[str], content: str = None, variable: str = None, interval: Interval = None):
+        # 节点标签，至少有一个区别节点类型的标签（Object, Property或Value），对象节点的内容以标签形式存储
+        self.labels = labels
+        # 节点内容，对象节点的内容以标签形式存储，即对象节点的content属性为null
         self.content = content
+        # 表示节点的变量名
+        self.variable = variable
+        # 节点有效时间
         self.interval = interval
-        if properties is None:
-            properties = []
-        self.properties = properties
 
     def __str__(self):
         result = ''
@@ -39,9 +22,38 @@ class SNode:
         for label in self.labels:
             result = result + ':' + label
         if self.content:
-            result = '{content:' + self.content +'}'
+            result = "{content:'" + self.content + "'}"
         result = '(' + result + ')'
         return result
+
+
+class PropertyNode(SNode):
+    def __init__(self, content: str, variable: str = None, interval: Interval = None):
+        super().__init__(['Property'], content, variable, interval)
+
+
+class ValueNode(SNode):
+    def __init__(self, content: str, variable: str = None, interval: Interval = None):
+        super().__init__(['Value'], content, variable, interval)
+
+
+class ObjectNode(SNode):
+
+    def __init__(self, content: str = None, variable: str = None, interval: Interval = None,
+                 properties: dict[PropertyNode, ValueNode] = None):
+        labels = ['Object']
+        if content:
+            labels.append(content)
+        super().__init__(labels, None, variable, interval)
+        if properties is None:
+            properties = {}
+        self.properties = properties
+
+    def get_properties_pattern(self):
+        pattern = []
+        for key, value in self.properties.items():
+            pattern.append(str(self) + '-[OBJECT_PROPERTY]->' + str(key) + '-[PROPERTY_VALUE]->' + str(value))
+        return pattern
 
 
 class SEdge:
@@ -109,3 +121,4 @@ class SPath:
         for edge in self.edges:
             variables.append(edge.variable)
         return variables
+
