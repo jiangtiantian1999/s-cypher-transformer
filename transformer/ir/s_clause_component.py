@@ -25,3 +25,13 @@ class Pattern:
             variables = [self.temporal_path_call.variable]
             variables.extend(self.temporal_path_call.path.get_variables())
             return variables
+
+
+class Expression:
+    def get_variables(self):
+        return []
+
+
+class ProjectionItem:
+    def get_variables(self):
+        return []
