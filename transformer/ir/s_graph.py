@@ -15,17 +15,6 @@ class SNode:
         # 节点有效时间
         self.interval = interval
 
-    def __str__(self):
-        result = ''
-        if self.variable:
-            result = self.variable
-        for label in self.labels:
-            result = result + ':' + label
-        if self.content:
-            result = "{content:'" + self.content + "'}"
-        result = '(' + result + ')'
-        return result
-
 
 class PropertyNode(SNode):
     def __init__(self, content: str, variable: str = None, interval: Interval = None):
@@ -49,11 +38,14 @@ class ObjectNode(SNode):
             properties = {}
         self.properties = properties
 
-    def get_properties_pattern(self):
-        pattern = []
+    def get_variables(self):
+        variables = []
         for key, value in self.properties.items():
-            pattern.append(str(self) + '-[OBJECT_PROPERTY]->' + str(key) + '-[PROPERTY_VALUE]->' + str(value))
-        return pattern
+            if key.variable:
+                variables.append(key.variable)
+            if value.variable:
+                variables.append(value.variable)
+        return variables
 
 
 class SEdge:
@@ -76,34 +68,6 @@ class SEdge:
         self.interval = interval
         self.properties = properties
 
-    def __str__(self):
-        result = ""
-        if self.variable:
-            result = self.variable
-        for label in self.labels:
-            result = result + ':' + label
-        if self.length[0] != 1 or self.length[1] != 1:
-            if self.length[0] == self.length[1]:
-                result = result + '*' + str(self.length[0])
-            else:
-                result = result + '*' + str(self.length[0]) + '..' + str(self.length[1])
-        if len(self.properties) != 0:
-            result = result + '{'
-            for index, (key, value) in enumerate(self.properties.items()):
-                if index != 0:
-                    result = result + ','
-                result = result + key + ":" + str(value)
-            result = result + '}'
-        if self.variable or self.labels or self.length[0] != 1 or self.length[1] != 1 or self.properties:
-            result = '-[' + result + ']-'
-        else:
-            result = '-' + result + '-'
-        if self.direction == self.LEFT:
-            result = '<' + result
-        elif self.direction == self.RIGHT:
-            result = result + '>'
-        return result
-
 
 class SPath:
     def __init__(self, nodes: List[SNode], edges: List[SEdge] = None):
@@ -117,8 +81,9 @@ class SPath:
     def get_variables(self):
         variables = []
         for node in self.nodes:
-            variables.append(node.variable)
+            if node.variable:
+                variables.append(node.variable)
         for edge in self.edges:
-            variables.append(edge.variable)
+            if edge.variable:
+                variables.append(edge.variable)
         return variables
-
