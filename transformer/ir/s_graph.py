@@ -40,6 +40,8 @@ class ObjectNode(SNode):
 
     def get_variables(self):
         variables = []
+        if self.variable:
+            variables.append(self.variable)
         for key, value in self.properties.items():
             if key.variable:
                 variables.append(key.variable)
@@ -70,7 +72,7 @@ class SEdge:
 
 
 class SPath:
-    def __init__(self, nodes: List[SNode], edges: List[SEdge] = None):
+    def __init__(self, nodes: List[ObjectNode], edges: List[SEdge] = None):
         if edges is None:
             edges = []
         if len(nodes) != len(edges) + 1:
@@ -81,8 +83,7 @@ class SPath:
     def get_variables(self):
         variables = []
         for node in self.nodes:
-            if node.variable:
-                variables.append(node.variable)
+            variables.extend(node.get_variables())
         for edge in self.edges:
             if edge.variable:
                 variables.append(edge.variable)
