@@ -169,13 +169,13 @@ class MultiQueryClause(Clause):
 
 # 复合查询（用UNION或UNION ALL连接）
 class UnionQueryClause(Clause):
-    def __init__(self, multi_query_clauses: List[MultiQueryClause], operations: List[str] = None):
-        if operations is None:
-            operations = []
-        if len(multi_query_clauses) != len(operations) + 1:
+    def __init__(self, multi_query_clauses: List[MultiQueryClause], is_all: List[bool] = None):
+        if is_all is None:
+            is_all = []
+        if len(multi_query_clauses) != len(is_all) + 1:
             raise ClauseError("The numbers of the clauses and union operations are not matched.")
         self.multi_query_clauses = multi_query_clauses
-        self.operations = operations
+        self.is_all = is_all
 
     def get_variables(self):
         variables = []
