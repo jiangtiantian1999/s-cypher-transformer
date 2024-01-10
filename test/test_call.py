@@ -31,8 +31,8 @@ class TestCall(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        assert records == [{"id": "E620AA48E32C3591A6711DA1F2530AFBD68AE541D41ABB20244BF0A7469D039F", "name": "neo4j",
-                            "creationDate": "2023-11-02T13:45:01.51Z"}]
+        assert records == [{"id": "1136BDEB12EBA9721C51000B60416AA70531B7CB9A84F01D3F8CFCE657E7B0C3", "name": "neo4j",
+                            "creationDate": "2023-12-27T03:24:36.989Z"}]
 
         # 无参指定返回值查询
         s_cypher = """

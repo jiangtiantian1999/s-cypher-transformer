@@ -1,3 +1,8 @@
+import os
+import sys
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
 from neo4j import BoltDriver
 
 from graphdb_connector import GraphDBConnector
@@ -103,10 +108,10 @@ class DataSet2:
 def test():
     graphdb_connector = GraphDBConnector()
     graphdb_connector.local_connect()
-    # dataset1 = DataSet1(graphdb_connector.driver)
-    # dataset1.rebuild()
+    dataset1 = DataSet1(graphdb_connector.driver)
+    dataset1.rebuild()
     dataset2 = DataSet2(graphdb_connector.driver)
     dataset2.rebuild()
     graphdb_connector.close()
 
-# test()
+test()
