@@ -40,29 +40,32 @@ class TestCall(TestCase):
 
         # 带参不指定返回值查询
         s_cypher = """
-        CALL apoc.when(true, 'RETURN $a + 7 as b', 'RETURN $a as b', {a:3})
+        CALL dbms.listConfig("client.allow_telemetry")
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        assert records == [{"value": {"b": 10}}]
+        assert records == [{"name": "client.allow_telemetry",
+                            "description": "Configure client applications such as Browser and Bloom to send Product Analytics data.",
+                            "value": 'true', "dynamic": False, "defaultValue": 'true', "startupValue": 'true',
+                            "explicitlySet": False, "validValues": 'a boolean'}]
 
         # 带参指定返回值查询
         s_cypher = """
-        CALL apoc.when(true, 'RETURN $a + 7 as b', 'RETURN $a as b',{a:3})
-        YIELD value
+        CALL dbms.listConfig("client.allow_telemetry")
+        YIELD name
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        assert records == [{"value": {"b": 10}}]
+        assert records == [{"name": "client.allow_telemetry"}]
 
     # 内部CALL查询
     def test_in_call(self):
         s_cypher = """
-        MATCH (n:Person {name:"Pauline Boutler"})-[:LIVE@T(NOW)]->(m:City)
-        CALL apoc.when(m.name = "London", 'RETURN true as living_in_london', 'RETURN false as living_in_london')
-        YIELD value
-        RETURN value
+        WITH "client.allow_telemetry" as value
+        CALL dbms.listConfig(value)
+        YIELD name
+        RETURN name
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        assert records == [{"value": {"living_in_london": True}}]
+        assert records == [{"name": "client.allow_telemetry"}]
