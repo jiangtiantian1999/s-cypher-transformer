@@ -2,8 +2,8 @@ import os
 import sys
 from unittest import TextTestRunner, defaultTestLoader, TestSuite
 
-root_path = os.path.dirname(os.path.dirname(__file__))
-sys.path.append(root_path)
+# root_path = os.path.dirname(os.path.dirname(__file__))
+# sys.path.append(root_path)
 
 if __name__ == '__main__':
     current_path = os.path.dirname(__file__)
@@ -23,17 +23,17 @@ if __name__ == '__main__':
 
     suite = TestSuite()
     suite.addTest(match_suite)
-    # suite.addTest(where_suite)
-    # suite.addTest(return_suite)
-    # suite.addTest(unwind_suite)
-    # suite.addTest(call_suite)
-    # suite.addTest(with_suite)
-    # suite.addTest(time_window_suite)
-    # suite.addTest(create_suite)
-    # suite.addTest(set_suite)
-    # suite.addTest(stale_suite)
-    # suite.addTest(remove_suite)
-    # suite.addTest(delete_suite)
+    suite.addTest(where_suite)
+    suite.addTest(return_suite)
+    suite.addTest(unwind_suite)
+    suite.addTest(call_suite)
+    suite.addTest(with_suite)
+    suite.addTest(time_window_suite)
+    suite.addTest(create_suite)
+    suite.addTest(set_suite)
+    suite.addTest(stale_suite)
+    suite.addTest(remove_suite)
+    suite.addTest(delete_suite)
     # suite.addTest(merge_suite)
 
     runner = TextTestRunner()

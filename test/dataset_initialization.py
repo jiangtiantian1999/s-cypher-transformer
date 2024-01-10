@@ -1,6 +1,6 @@
 from neo4j import BoltDriver
 
-from test.graphdb_connector import GraphDBConnector
+from graphdb_connector import GraphDBConnector
 from transformer.s_transformer import STransformer
 
 

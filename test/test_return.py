@@ -1,10 +1,15 @@
+import os
+import sys
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
 from datetime import timezone
 from unittest import TestCase
 
 from neo4j.exceptions import ClientError
 from neo4j.time import DateTime, Time, Duration
 
-from test.graphdb_connector import GraphDBConnector
+from graphdb_connector import GraphDBConnector
 from transformer.s_transformer import STransformer
 
 

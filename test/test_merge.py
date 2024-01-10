@@ -1,10 +1,15 @@
+import os
+import sys
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
 from datetime import timezone
 from unittest import TestCase
 
 from neo4j.time import DateTime
 
-from test.dataset_initialization import DataSet1
-from test.graphdb_connector import GraphDBConnector
+from dataset_initialization import DataSet1
+from graphdb_connector import GraphDBConnector
 from transformer.s_transformer import STransformer
 
 
