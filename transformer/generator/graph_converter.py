@@ -121,13 +121,14 @@ class GraphConverter:
     def create_path(self, path: SPath, time_window: AtTimeClause = None) -> (List[str], List[str], List[str], str):
         all_object_node_pattern, all_property_node_patterns, all_value_node_patterns = [], [], []
         for object_node in path.nodes:
-            if object_node.variable in self.variables_manager.updating_variables.keys():
+            if object_node.variable is None or object_node.variable in self.variables_manager.updating_variables.keys():
                 # 该对象节点是在更新语句中定义的，需要创建对象节点、属性节点和值节点（和相连边），否则不需要创建，仅用于路径创建
                 # 即使是在更新语句中定义的，也只要创建一次
-                if self.variables_manager.updating_variables[object_node.variable] is False:
+                if object_node.variable is None or self.variables_manager.updating_variables[
+                    object_node.variable] is False:
                     # 如果未创建过该对象节点
                     object_node_pattern, property_node_patterns, value_node_patterns = self.create_object_node(
-                        path.nodes[0], time_window)
+                        object_node, time_window)
                     all_object_node_pattern.append(object_node_pattern)
                     all_property_node_patterns.extend(property_node_patterns)
                     all_value_node_patterns.extend(value_node_patterns)
