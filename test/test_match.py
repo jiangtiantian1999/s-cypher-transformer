@@ -1,5 +1,6 @@
 import os
 import sys
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
@@ -16,7 +17,7 @@ class TestMatch(TestCase):
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.graphdb_connector = GraphDBConnector()
-        cls.graphdb_connector.local_connect()
+        cls.graphdb_connector.default_connect()
 
     @classmethod
     def tearDownClass(cls) -> None:

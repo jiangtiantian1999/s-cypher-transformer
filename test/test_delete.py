@@ -1,5 +1,8 @@
 import os
 import sys
+
+from test.dataset.person_dataset import PersonDataSet
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
@@ -7,25 +10,24 @@ from unittest import TestCase
 from datetime import timezone
 from neo4j.time import DateTime
 
-from dataset_initialization import DataSet1
 from graphdb_connector import GraphDBConnector
 from transformer.s_transformer import STransformer
 
 
 class TestDelete(TestCase):
     graphdb_connector = None
-    dataset1 = None
+    person_dataset = None
 
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.graphdb_connector = GraphDBConnector()
-        cls.graphdb_connector.local_connect()
-        cls.dataset1 = DataSet1(cls.graphdb_connector.driver)
+        cls.graphdb_connector.default_connect()
+        cls.person_dataset = PersonDataSet(cls.graphdb_connector.driver)
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.dataset1.rebuild()
+        cls.person_dataset.rebuild()
         super().tearDownClass()
         cls.graphdb_connector.close()
 
@@ -66,7 +68,7 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"count": 7}]
 
         # 物理删除多个实体及其所有关系
@@ -82,7 +84,7 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"count": 5}]
 
     # 物理删除属性节点（及其值节点）
@@ -95,7 +97,7 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"name": None}]
 
         # 物理删除属性节点和值节点时，DETACH不起作用
@@ -106,7 +108,7 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"start_time": DateTime(1978, 1, 1, tzinfo=timezone.utc), "name": None}]
 
     # 物理删除值节点
@@ -119,7 +121,7 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"name": None}]
 
         # 物理删除某个属性节点下的指定时间区间下的所有值节点
@@ -131,7 +133,7 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"name": None}]
 
         # 使用BETWEEN指定删除值节点的范围
@@ -143,7 +145,7 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"name": "Mary Smith"}]
 
         # 物理删除某个属性节点下的指定时间点下的值节点
@@ -155,7 +157,7 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"name": "Mary Smith Taylor"}]
 
         # 使用AT TIME指定删除值节点的范围
@@ -167,7 +169,7 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"name": "Mary Smith Taylor"}]
 
     # 物理删除关系
@@ -184,5 +186,5 @@ class TestDelete(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"count": 7}]

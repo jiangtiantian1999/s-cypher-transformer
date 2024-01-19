@@ -1,5 +1,8 @@
 import os
 import sys
+
+from test.dataset.person_dataset import PersonDataSet
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
@@ -8,26 +11,25 @@ from unittest import TestCase
 
 from neo4j.time import DateTime
 
-from dataset_initialization import DataSet1
 from graphdb_connector import GraphDBConnector
 from transformer.s_transformer import STransformer
 
 
 class TestTimeWindow(TestCase):
     graphdb_connector = None
-    dataset1 = None
+    person_dataset = None
 
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.graphdb_connector = GraphDBConnector()
-        cls.graphdb_connector.local_connect()
-        cls.dataset1 = DataSet1(cls.graphdb_connector.driver)
+        cls.graphdb_connector.default_connect()
+        cls.person_dataset = PersonDataSet(cls.graphdb_connector.driver)
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.clear(cls)
-        cls.dataset1.rebuild()
+        cls.person_dataset.rebuild()
         super().tearDownClass()
         cls.graphdb_connector.close()
 

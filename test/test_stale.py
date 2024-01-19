@@ -1,5 +1,8 @@
 import os
 import sys
+
+from test.dataset.person_dataset import PersonDataSet
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
@@ -9,21 +12,20 @@ from unittest import TestCase
 from neo4j.exceptions import ClientError
 from neo4j.time import DateTime
 
-from dataset_initialization import DataSet1
 from graphdb_connector import GraphDBConnector
 from transformer.s_transformer import STransformer
 
 
 class TestStale(TestCase):
     graphdb_connector = None
-    dataset1 = None
+    person_dataset = None
 
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.graphdb_connector = GraphDBConnector()
-        cls.graphdb_connector.local_connect()
-        cls.dataset1 = DataSet1(cls.graphdb_connector.driver)
+        cls.graphdb_connector.default_connect()
+        cls.person_dataset = PersonDataSet(cls.graphdb_connector.driver)
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -40,7 +42,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{
             "object_effective_time": {"from": DateTime(1978, 1, 1, tzinfo=timezone.utc),
                                       "to": DateTime(2022, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc)},
@@ -59,7 +61,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"object_effective_time": {"from": DateTime(1990, 1, 1, tzinfo=timezone.utc),
                                                       "to": DateTime(2010, 1, 1, tzinfo=timezone.utc)},
                             "property_effective_time": {"from": DateTime(1990, 1, 1, tzinfo=timezone.utc),
@@ -76,7 +78,7 @@ class TestStale(TestCase):
         cypher_query = STransformer.transform(s_cypher)
         with self.assertRaises(ClientError):
             self.graphdb_connector.driver.execute_query(cypher_query)
-            self.dataset1.rebuild()
+            self.person_dataset.rebuild()
 
     # 逻辑删除属性节点（及其值节点）
     def test_stale_property(self):
@@ -88,7 +90,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"object_end_time": DateTime(9999, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc),
                             "property_end_time": DateTime(2022, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc),
                             "value_end_time": DateTime(2022, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc)}]
@@ -101,7 +103,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"object_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc),
                             "property_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc),
                             "value_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc)}]
@@ -114,7 +116,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"object_end_time": DateTime(9999, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc),
                             "property_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc),
                             "value_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc)}]
@@ -128,7 +130,7 @@ class TestStale(TestCase):
         cypher_query = STransformer.transform(s_cypher)
         with self.assertRaises(ClientError):
             self.graphdb_connector.driver.execute_query(cypher_query)
-            self.dataset1.rebuild()
+            self.person_dataset.rebuild()
 
     # 逻辑删除值节点
     def test_stale_value(self):
@@ -140,7 +142,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"object_end_time": DateTime(9999, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc),
                             "property_end_time": DateTime(9999, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc),
                             "value_end_time": DateTime(2022, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc)}]
@@ -153,7 +155,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"node_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc),
                             "property_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc),
                             "value_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc)}]
@@ -166,7 +168,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"node_end_time": DateTime(9999, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc),
                             "property_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc),
                             "value_end_time": DateTime(2010, 1, 1, tzinfo=timezone.utc)}]
@@ -180,7 +182,7 @@ class TestStale(TestCase):
         cypher_query = STransformer.transform(s_cypher)
         with self.assertRaises(ClientError):
             self.graphdb_connector.driver.execute_query(cypher_query)
-            self.dataset1.rebuild()
+            self.person_dataset.rebuild()
 
     # 逻辑删除关系
     def test_stale_relationship(self):
@@ -192,7 +194,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"effective": {"from": DateTime(2004, 1, 1, tzinfo=timezone.utc),
                                           "to": DateTime(2022, 12, 31, 23, 59, 59, 999999999, tzinfo=timezone.utc)}}]
 
@@ -204,7 +206,7 @@ class TestStale(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{
             "effective_time": {"from": DateTime(2015, 1, 1, tzinfo=timezone.utc),
                                "to": DateTime(2018, 1, 1, tzinfo=timezone.utc)}}]
@@ -219,4 +221,4 @@ class TestStale(TestCase):
         cypher_query = STransformer.transform(s_cypher)
         with self.assertRaises(ClientError):
             self.graphdb_connector.driver.execute_query(cypher_query)
-            self.dataset1.rebuild()
+            self.person_dataset.rebuild()

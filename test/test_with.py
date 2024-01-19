@@ -20,7 +20,7 @@ class TestWith(TestCase):
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.graphdb_connector = GraphDBConnector()
-        cls.graphdb_connector.local_connect()
+        cls.graphdb_connector.default_connect()
 
     @classmethod
     def tearDownClass(cls) -> None:

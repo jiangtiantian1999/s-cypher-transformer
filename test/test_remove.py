@@ -1,25 +1,27 @@
 import os
 import sys
+
+from test.dataset.person_dataset import PersonDataSet
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
 from unittest import TestCase
 
-from dataset_initialization import DataSet1
 from graphdb_connector import GraphDBConnector
 from transformer.s_transformer import STransformer
 
 
 class TestRemove(TestCase):
     graphdb_connector = None
-    dataset1 = None
+    person_dataset = None
 
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.graphdb_connector = GraphDBConnector()
-        cls.graphdb_connector.local_connect()
-        cls.dataset1 = DataSet1(cls.graphdb_connector.driver)
+        cls.graphdb_connector.default_connect()
+        cls.person_dataset = PersonDataSet(cls.graphdb_connector.driver)
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -43,7 +45,7 @@ class TestRemove(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"code": None}]
 
         # 不能使用REMOVE删除实体的属性
@@ -54,7 +56,7 @@ class TestRemove(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"name": "Pauline Boutler"}]
 
         # 不能REMOVE属性intervalFrom和intervalTo
@@ -81,7 +83,7 @@ class TestRemove(TestCase):
         """
         cypher_query = STransformer.transform(s_cypher)
         records, summery, keys = self.graphdb_connector.driver.execute_query(cypher_query)
-        self.dataset1.rebuild()
+        self.person_dataset.rebuild()
         assert records == [{"labels": ["Object"]}]
 
         # 不能移除标签Object、Property和Value
