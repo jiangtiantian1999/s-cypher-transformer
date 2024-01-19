@@ -1,0 +1,80 @@
+vertex:     
+  - vidIndex: 1
+    labelIndex: 1
+    name: customer
+    props:
+    - name: Id
+      type: string
+      index: 1
+      nullable: false   
+  - vidIndex: 1
+    labelIndex: 8
+    name: product
+    props:
+    - name: Id
+      type: string
+      index: 1
+      nullable: false
+    - name: ASIN
+      type: string
+      index: 2
+      nullable: true
+    - name: title
+      type: string
+      index: 3
+      nullable: true
+    - name: group
+      type: string
+      index: 4
+      nullable: true
+    - name: categories
+      type: string
+      index: 5
+      nullable: true
+    - name: total_reviews
+      type: double
+      index: 6
+      nullable: true
+    - name: downloaded_reviews
+      type: double
+      index: 7
+      nullable: true
+    - name: avg_rating
+      type: double
+      index: 8
+      nullable: true
+edge:
+  - type: co_purchase
+    srcVIDIndex: 1
+    dstVIDIndex: 2
+    labelIndex: 0
+    props:
+    - name: sourceId
+      type: string
+      index: 1
+    - name: destId
+      type: string
+      index: 2
+  - type: review
+    srcVIDIndex: 2
+    dstVIDIndex: 3
+    labelIndex: 4
+    props:
+    - name: date
+      type: string
+      index: 1
+    - name: customer
+      type: string
+      index: 2
+    - name: product
+      type: string
+      index: 3
+    - name: rating
+      type: double
+      index: 4
+    - name: votes
+      type: double
+      index: 5
+    - name: helpful
+      type: double
+      index: 6
