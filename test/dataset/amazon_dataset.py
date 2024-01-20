@@ -26,10 +26,6 @@ class AmazonDataSet:
         MATCH (cu:Customer), (co:Country), (p:Product), (re:Review), (t:Tag)
         DETACH DELETE cu, co, p ,re, t
         """
-        s_cypher_query = """
-        MATCH  (re:Review)
-        DETACH DELETE re
-        """
         # 问题，match的结果很大时，会非常慢
         cypher_query = STransformer.transform(s_cypher_query)
         self.driver.execute_query(cypher_query)
@@ -38,8 +34,7 @@ class AmazonDataSet:
         pd.set_option('display.max_columns', None)
         seed = 2024
         random.seed = seed
-        review_df = pd.read_csv("amazon/amazon-review.csv", header=None, dtype=str).fillna("NULL")[
-            [1, 2, 3, 4, 5, 6]]
+        review_df = pd.read_csv("amazon/amazon-review.csv", header=None, dtype=str).fillna("NULL")[[1, 2, 3, 4, 5, 6]]
         product_df = pd.read_csv("amazon/amazon-product.csv", header=None, dtype=str).fillna("NULL")[
             [1, 2, 3, 4, 5, 6, 7, 8]]
         customer_df = pd.read_csv("amazon/amazon-customer.csv", header=None, dtype=str).fillna("NULL")[[1]]
@@ -219,8 +214,8 @@ class AmazonDataSet:
             self.driver.execute_query(cypher_query)
 
 
-graphdb_connector = GraphDBConnector()
-graphdb_connector.default_connect()
-amazon_dataset = AmazonDataSet(graphdb_connector.driver)
-amazon_dataset.rebuild()
-graphdb_connector.close()
+# graphdb_connector = GraphDBConnector()
+# graphdb_connector.default_connect()
+# amazon_dataset = AmazonDataSet(graphdb_connector.driver)
+# amazon_dataset.rebuild()
+# graphdb_connector.close()
