@@ -38,12 +38,12 @@ class AmazonDataSet:
         pd.set_option('display.max_columns', None)
         seed = 2024
         random.seed = seed
-        review_df = pd.read_csv("dataset/amazon/amazon-review.csv", header=None, dtype=str).fillna("NULL")[
+        review_df = pd.read_csv("amazon/amazon-review.csv", header=None, dtype=str).fillna("NULL")[
             [1, 2, 3, 4, 5, 6]]
-        product_df = pd.read_csv("dataset/amazon/amazon-product.csv", header=None, dtype=str).fillna("NULL")[
+        product_df = pd.read_csv("amazon/amazon-product.csv", header=None, dtype=str).fillna("NULL")[
             [1, 2, 3, 4, 5, 6, 7, 8]]
-        customer_df = pd.read_csv("dataset/amazon/amazon-customer.csv", header=None, dtype=str).fillna("NULL")[[1]]
-        copurchases_df = pd.read_csv("dataset/amazon/amazon-copurchases.csv", header=None, dtype=str).fillna("NULL")[
+        customer_df = pd.read_csv("amazon/amazon-customer.csv", header=None, dtype=str).fillna("NULL")[[1]]
+        copurchases_df = pd.read_csv("amazon/amazon-copurchases.csv", header=None, dtype=str).fillna("NULL")[
             [1, 2]].drop_duplicates()
         review_df.columns = ["date", "customer", "product", "rating", "votes", "helpful"]
         product_df.columns = ["id", "ASIN", "title", "group", "categories", "total_reviews", "downloaded_reviews",
@@ -219,8 +219,8 @@ class AmazonDataSet:
             self.driver.execute_query(cypher_query)
 
 
-# graphdb_connector = GraphDBConnector()
-# graphdb_connector.default_connect()
-# amazon_dataset = AmazonDataSet(graphdb_connector.driver)
-# amazon_dataset.rebuild()
-# graphdb_connector.close()
+graphdb_connector = GraphDBConnector()
+graphdb_connector.default_connect()
+amazon_dataset = AmazonDataSet(graphdb_connector.driver)
+amazon_dataset.rebuild()
+graphdb_connector.close()
