@@ -1,0 +1,16 @@
+scypher:
+  function_name: [ "now", "timePoint", "interval", "interval.intersection", "interval.range", "interval.difference" ]
+  procedure_name: [ ]
+
+network:
+  host: "115.236.33.124"
+  port: 8710
+  username: "dev"
+  password: "password"
+  private_key: "id_rsa"
+
+graph_database:
+  host: "0.0.0.0"
+  port: 7009
+  username: "neo4j"
+  password: "password"
