@@ -1,15 +1,13 @@
 import os
 import sys
+from unittest import TestCase
 
 from test.dataset.person_dataset import PersonDataSet
+from test.graphdb_connector import GraphDBConnector
+from transformer.s_transformer import STransformer
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
-
-from unittest import TestCase
-
-from graphdb_connector import GraphDBConnector
-from transformer.s_transformer import STransformer
 
 
 class TestRemove(TestCase):

@@ -1,12 +1,12 @@
 import os
 import sys
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(BASE_DIR)
 
+from test.graphdb_connector import GraphDBConnector
+from transformer.s_transformer import STransformer
 from unittest import TestCase
 
-from graphdb_connector import GraphDBConnector
-from transformer.s_transformer import STransformer
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
 
 
 class TestCall(TestCase):

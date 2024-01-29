@@ -1,16 +1,15 @@
 import os
 import sys
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(BASE_DIR)
-
+import pytz
 from datetime import timezone
 from unittest import TestCase
-
 from neo4j.time import DateTime, Date, Duration
-import pytz
 
-from graphdb_connector import GraphDBConnector
+from test.graphdb_connector import GraphDBConnector
 from transformer.s_transformer import STransformer
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
 
 
 class TestWith(TestCase):
