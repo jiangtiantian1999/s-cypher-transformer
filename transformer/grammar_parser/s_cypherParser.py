@@ -227,7 +227,7 @@ def serializedATN():
         224,226,228,230,232,234,236,238,240,242,244,246,248,250,252,254,
         256,258,260,262,264,266,268,270,272,274,276,278,280,282,284,286,
         288,290,292,294,296,0,13,2,0,5,5,13,14,1,0,16,17,2,0,2,2,18,22,1,
-        0,55,56,8,0,49,49,52,52,94,94,98,98,100,102,109,109,130,132,135,
+        0,55,56,8,0,49,49,52,52,94,94,98,98,100,103,109,109,130,132,135,
         135,5,0,49,69,72,93,95,99,103,105,120,129,1,0,79,82,1,0,104,105,
         1,0,106,108,1,0,116,117,2,0,19,19,27,30,2,0,21,21,31,34,2,0,17,17,
         35,45,2469,0,301,1,0,0,0,2,304,1,0,0,0,4,312,1,0,0,0,6,340,1,0,0,
@@ -3389,7 +3389,7 @@ class s_cypherParser ( Parser ):
                     self.state = 636
                     self.match(s_cypherParser.T__4)
                     pass
-                elif token in [49, 52, 94, 98, 100, 101, 102, 109, 130, 131, 132, 135]:
+                elif token in [49, 52, 94, 98, 100, 101, 102, 103, 109, 130, 131, 132, 135]:
                     self.state = 637
                     self.s_YieldItems()
                     pass
@@ -3989,7 +3989,7 @@ class s_cypherParser ( Parser ):
                 self.state = 734
                 self.oC_RegularQuery()
                 pass
-            elif token in [6, 49, 52, 94, 98, 100, 101, 102, 109, 130, 131, 132, 135]:
+            elif token in [6, 49, 52, 94, 98, 100, 101, 102, 103, 109, 130, 131, 132, 135]:
                 self.state = 735
                 self.oC_Pattern()
                 self.state = 740
@@ -4553,7 +4553,7 @@ class s_cypherParser ( Parser ):
             self.state = 823
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==49 or _la==52 or ((((_la - 94)) & ~0x3f) == 0 and ((1 << (_la - 94)) & 2680059625937) != 0):
+            if _la==49 or _la==52 or ((((_la - 94)) & ~0x3f) == 0 and ((1 << (_la - 94)) & 2680059626449) != 0):
                 self.state = 819
                 self.oC_Variable()
                 self.state = 821
@@ -5037,7 +5037,7 @@ class s_cypherParser ( Parser ):
             self.state = 913
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==49 or _la==52 or ((((_la - 94)) & ~0x3f) == 0 and ((1 << (_la - 94)) & 2680059625937) != 0):
+            if _la==49 or _la==52 or ((((_la - 94)) & ~0x3f) == 0 and ((1 << (_la - 94)) & 2680059626449) != 0):
                 self.state = 909
                 self.oC_Variable()
                 self.state = 911
@@ -7432,6 +7432,9 @@ class s_cypherParser ( Parser ):
         def BETWEEN(self):
             return self.getToken(s_cypherParser.BETWEEN, 0)
 
+        def EXISTS(self):
+            return self.getToken(s_cypherParser.EXISTS, 0)
+
         def getRuleIndex(self):
             return s_cypherParser.RULE_oC_SymbolicName
 
@@ -7455,7 +7458,7 @@ class s_cypherParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 1277
             _la = self._input.LA(1)
-            if not(_la==49 or _la==52 or ((((_la - 94)) & ~0x3f) == 0 and ((1 << (_la - 94)) & 2680059625937) != 0)):
+            if not(_la==49 or _la==52 or ((((_la - 94)) & ~0x3f) == 0 and ((1 << (_la - 94)) & 2680059626449) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -12390,7 +12393,7 @@ class s_cypherParser ( Parser ):
             self.state = 2022
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==49 or _la==52 or ((((_la - 94)) & ~0x3f) == 0 and ((1 << (_la - 94)) & 2680059625937) != 0):
+            if _la==49 or _la==52 or ((((_la - 94)) & ~0x3f) == 0 and ((1 << (_la - 94)) & 2680059626449) != 0):
                 self.state = 2014
                 self.oC_Variable()
                 self.state = 2016
@@ -13512,7 +13515,7 @@ class s_cypherParser ( Parser ):
             self.state = 2163
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [49, 52, 94, 98, 100, 101, 102, 109, 130, 131, 132, 135]:
+            if token in [49, 52, 94, 98, 100, 101, 102, 103, 109, 130, 131, 132, 135]:
                 self.state = 2161
                 self.oC_SymbolicName()
                 pass
