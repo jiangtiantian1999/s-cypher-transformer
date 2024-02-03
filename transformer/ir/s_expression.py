@@ -16,6 +16,7 @@ class MapLiteral:
 
 
 class CaseExpression:
+    # 注意：该处expression为Expression类型，conditions和results为List[Expression]类型，由于与Expression相互引用，故此处不写明类型。
     def __init__(self, expression=None, conditions: List = None, results: List = None):
         if conditions is None or results is None:
             raise TranslateError("The conditions and reaults can't be None")
