@@ -40,7 +40,9 @@ class FlightDataSet:
 
         # 创建航班边
         # 剔除时间为空值的数据
-        flight_df = pd.read_csv("flight/flights.csv", dtype=str).dropna(
+        # first_week, first_month, first_three_month, first_half_year, first_entire_year
+        date = "first_day"
+        flight_df = pd.read_csv("flight/" + date + ".csv", dtype=str).dropna(
             subset=["YEAR", "MONTH", "DAY", "DEPARTURE_TIME", "ARRIVAL_TIME", "FLIGHT_NUMBER", "TAIL_NUMBER"])
 
         # 将 "YEAR"、"MONTH"、"DAY" 列转换为 datetime 对象
@@ -114,6 +116,6 @@ class FlightDataSet:
 
 graphdb_connector = GraphDBConnector()
 graphdb_connector.default_connect()
-person_dataset = FlightDataSet(graphdb_connector.driver)
-person_dataset.rebuild()
+flight_dataset = FlightDataSet(graphdb_connector.driver)
+flight_dataset.rebuild()
 graphdb_connector.close()
