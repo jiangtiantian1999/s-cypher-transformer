@@ -187,6 +187,7 @@ oC_SymbolicName : UnescapedSymbolicName
                 | NOW
                 | WHEN
                 | BETWEEN
+                | EXISTS
                 ;
 
 AtT : '@T' | '@t' ;

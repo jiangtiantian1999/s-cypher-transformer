@@ -1,6 +1,5 @@
 from neo4j import GraphDatabase
 from sshtunnel import SSHTunnelForwarder
-import paramiko
 from transformer.conf.config_reader import ConfigReader
 
 

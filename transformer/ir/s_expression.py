@@ -16,11 +16,18 @@ class MapLiteral:
 
 
 class CaseExpression:
-    pass
+    # 注意：该处expression为Expression类型，conditions和results为List[Expression]类型，由于与Expression相互引用，故此处不写明类型。
+    def __init__(self, expression=None, conditions: List = None, results: List = None):
+        if conditions is None or results is None:
+            raise TranslateError("The conditions and reaults can't be None")
+        if len(conditions) not in [len(results), len(results) - 1]:
+            raise TranslateError("The quantity of conditions and results can't match")
+        self.expression = expression
+        self.conditions = conditions
+        self.results = results
 
 
 class ListComprehension:
-    # TODO variable待添加至variables_manager.user_variables
     # 注意：该处list_expression,where_expression和back_expression为Expression类型，由于与Expression相互引用，故此处不写明类型。
     def __init__(self, variable: str, list_expression, where_expression=None, back_expression=None):
         self.variable = variable

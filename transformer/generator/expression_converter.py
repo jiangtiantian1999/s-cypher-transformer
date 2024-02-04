@@ -16,24 +16,24 @@ class ExpressionConverter:
         or_expression_string = ""
         for index, xor_expression in enumerate(or_expression.xor_expressions):
             if index != 0:
-                or_expression_string = or_expression_string + " or "
-            or_expression_string = or_expression_string + self.convert_xor_expression(xor_expression)
+                or_expression_string += " or "
+            or_expression_string += self.convert_xor_expression(xor_expression)
         return or_expression_string
 
     def convert_xor_expression(self, xor_expression: XorExpression) -> str:
         xor_expression_string = ""
         for index, and_expression in enumerate(xor_expression.and_expressions):
             if index != 0:
-                xor_expression_string = xor_expression_string + " xor "
-            xor_expression_string = xor_expression_string + self.convert_and_expression(and_expression)
+                xor_expression_string += " xor "
+            xor_expression_string += self.convert_and_expression(and_expression)
         return xor_expression_string
 
     def convert_and_expression(self, and_expression: AndExpression) -> str:
         and_expression_string = ""
         for index, not_expression in enumerate(and_expression.not_expressions):
             if index != 0:
-                and_expression_string = and_expression_string + " and "
-            and_expression_string = and_expression_string + self.convert_not_expression(not_expression)
+                and_expression_string += " and "
+            and_expression_string += self.convert_not_expression(not_expression)
         return and_expression_string
 
     def convert_not_expression(self, not_expression: NotExpression) -> str:
@@ -45,7 +45,7 @@ class ExpressionConverter:
     def convert_comparison_expression(self, comparison_expression: ComparisonExpression) -> str:
         comparison_expression_string = self.convert_subject_expression(comparison_expression.subject_expressions[0])
         for index, comparison_operation in enumerate(comparison_expression.comparison_operations):
-            comparison_expression_string = comparison_expression_string + ' ' + comparison_operation + ' ' + self.convert_subject_expression(
+            comparison_expression_string += ' ' + comparison_operation + ' ' + self.convert_subject_expression(
                 comparison_expression.subject_expressions[index + 1])
         return comparison_expression_string
 
@@ -60,16 +60,16 @@ class ExpressionConverter:
             elif predicate_expression.__class__ == StringPredicateExpression:
                 predicate_expression_string = self.convert_add_subtract_expression(
                     predicate_expression.add_subtract_expression)
-                subject_expression_string = subject_expression_string + ' ' + predicate_expression.string_operation + ' ' + predicate_expression_string
+                subject_expression_string += ' ' + predicate_expression.string_operation + ' ' + predicate_expression_string
             elif predicate_expression.__class__ == ListPredicateExpression:
                 predicate_expression_string = self.convert_add_subtract_expression(
                     predicate_expression.add_subtract_expression)
-                subject_expression_string = subject_expression_string + ' IN ' + predicate_expression_string
+                subject_expression_string += ' IN ' + predicate_expression_string
             elif predicate_expression.__class__ == NullPredicateExpression:
                 if predicate_expression.is_null:
-                    subject_expression_string = subject_expression_string + " IS NULL"
+                    subject_expression_string += " IS NULL"
                 else:
-                    subject_expression_string = subject_expression_string + " IS NOT NULL"
+                    subject_expression_string += " IS NOT NULL"
         return subject_expression_string
 
     def convert_add_subtract_expression(self, add_subtract_expression: AddSubtractExpression) -> str:
@@ -77,7 +77,7 @@ class ExpressionConverter:
             add_subtract_expression.multiply_divide_modulo_expressions[0])
 
         for index, add_subtract_operation in enumerate(add_subtract_expression.add_subtract_operations):
-            add_subtract_expression_string = add_subtract_expression_string + ' ' + add_subtract_operation + ' ' + self.convert_multiply_divide_modulo_expression(
+            add_subtract_expression_string += ' ' + add_subtract_operation + ' ' + self.convert_multiply_divide_modulo_expression(
                 add_subtract_expression.multiply_divide_modulo_expressions[index + 1])
 
         return add_subtract_expression_string
@@ -89,14 +89,14 @@ class ExpressionConverter:
 
         for index, multiply_divide_operation in enumerate(
                 multiply_divide_modulo_expression.multiply_divide_modulo_operations):
-            multiply_divide_modulo_expression_string = multiply_divide_modulo_expression_string + ' ' + multiply_divide_operation + ' ' + self.convert_power_expression(
+            multiply_divide_modulo_expression_string += ' ' + multiply_divide_operation + ' ' + self.convert_power_expression(
                 multiply_divide_modulo_expression.power_expressions[index + 1])
         return multiply_divide_modulo_expression_string
 
     def convert_power_expression(self, power_expression: PowerExpression) -> str:
         power_expression_string = ""
         for list_index_expression in power_expression.list_index_expressions:
-            power_expression_string = power_expression_string + '^' + self.convert_list_index_expression(
+            power_expression_string += '^' + self.convert_list_index_expression(
                 list_index_expression)
         return power_expression_string.lstrip('^')
 
@@ -111,10 +111,10 @@ class ExpressionConverter:
         for index_expression in list_index_expression.index_expressions:
             left_expression_string = self.convert_expression(index_expression.left_expression)
             if index_expression.right_expression is None:
-                list_index_expression_string = list_index_expression_string + '[' + left_expression_string + ']'
+                list_index_expression_string += '[' + left_expression_string + ']'
             else:
                 right_expression_string = self.convert_expression(index_expression.right_expression)
-                list_index_expression_string = list_index_expression_string + '[' + left_expression_string + ".." + right_expression_string + ']'
+                list_index_expression_string += '[' + left_expression_string + ".." + right_expression_string + ']'
 
         if list_index_expression.is_positive is False:
             list_index_expression_string = '-' + list_index_expression_string
@@ -142,7 +142,7 @@ class ExpressionConverter:
 
         for index, property_name in enumerate(properties_labels_expression.property_chains):
             if index != len(properties_labels_expression.property_chains) - 1:
-                properties_labels_expression_string = properties_labels_expression_string + '.' + property_name
+                properties_labels_expression_string += '.' + property_name
 
         if len(properties_labels_expression.property_chains) > 0:
             if properties_labels_expression.labels_poundT.__class__ == AtTElement:
@@ -160,13 +160,13 @@ class ExpressionConverter:
         if properties_labels_expression.labels_poundT.__class__ == list:
             # 判断某节点/边是否有某（些）标签
             for label in properties_labels_expression.labels_poundT:
-                properties_labels_expression_string = properties_labels_expression_string + ':' + label
+                properties_labels_expression_string += ':' + label
         return properties_labels_expression_string
 
     def convert_at_t_expression(self, at_t_expression: PoundTExpression) -> str:
         at_t_expression_string = self.convert_atom(at_t_expression.atom)
         for property_name in at_t_expression.property_chains:
-            at_t_expression_string = at_t_expression_string + '.' + property_name
+            at_t_expression_string += '.' + property_name
 
         if at_t_expression.property_name is None:
             # 返回对象节点或边的有效时间，直接访问即可
@@ -184,7 +184,7 @@ class ExpressionConverter:
             # 一定是返回值节点的有效时间，否则报错
             at_t_expression_string = "scypher.getValueEffectiveTime(" + at_t_expression_string + ", \"" + at_t_expression.property_name + "\", " + interval_string + ')'
         for time_property in at_t_expression.time_property_chains:
-            at_t_expression_string = at_t_expression_string + '.' + time_property
+            at_t_expression_string += '.' + time_property
         return at_t_expression_string
 
     def convert_atom(self, atom: Atom) -> str:
@@ -198,7 +198,7 @@ class ExpressionConverter:
         elif particle.__class__ == MapLiteral:
             return self.convert_map_literal(particle)
         elif particle.__class__ == CaseExpression:
-            pass
+            return self.convert_case_expression(particle)
         elif particle.__class__ == ListComprehension:
             return self.convert_list_comprehension(particle)
         elif particle.__class__ == PatternComprehension:
@@ -217,23 +217,34 @@ class ExpressionConverter:
     def convert_list_literal(self, list_literal: ListLiteral) -> str:
         list_literal_string = ""
         for expression in list_literal.expressions:
-            list_literal_string = list_literal_string + self.convert_expression(expression) + ", "
+            list_literal_string += self.convert_expression(expression) + ", "
         return '[' + list_literal_string.rstrip(", ") + ']'
 
     def convert_map_literal(self, map_literal: MapLiteral) -> str:
         map_literal_string = ""
         for key, value in map_literal.keys_values.items():
-            map_literal_string = map_literal_string + key + ": " + self.convert_expression(value) + ", "
+            map_literal_string += key + ": " + self.convert_expression(value) + ", "
         return '{' + map_literal_string.rstrip(", ") + '}'
+
+    def convert_case_expression(self, case_expression: CaseExpression) -> str:
+        case_expression_string = "CASE "
+        if case_expression.expression:
+            case_expression_string += self.convert_expression(case_expression.expression)
+        for index, condition in case_expression.conditions:
+            case_expression_string += "\nWHEN " + self.convert_expression(
+                condition) + " THEN " + self.convert_expression(case_expression.results[index])
+        if len(case_expression.conditions) + 1 == len(case_expression.results):
+            case_expression_string += "\nELSE " + self.convert_expression(case_expression.results[-1]) + " END"
+        return case_expression_string
 
     def convert_list_comprehension(self, list_comprehension: ListComprehension) -> str:
         list_comprehension_string = list_comprehension.variable + " IN " + self.convert_expression(
             list_comprehension.list_expression)
         if list_comprehension.where_expression:
-            list_comprehension_string = list_comprehension_string + " WHERE " + self.convert_expression(
+            list_comprehension_string += " WHERE " + self.convert_expression(
                 list_comprehension.where_expression)
         if list_comprehension.back_expression:
-            list_comprehension_string = list_comprehension_string + " | " + self.convert_expression(
+            list_comprehension_string += " | " + self.convert_expression(
                 list_comprehension.back_expression)
         return '[' + list_comprehension_string + ']'
 
@@ -242,7 +253,7 @@ class ExpressionConverter:
         if function_invocation.is_distinct:
             function_invocation_string = "DISTINCT "
         for expression in function_invocation.expressions:
-            function_invocation_string = function_invocation_string + self.convert_expression(expression) + ", "
+            function_invocation_string += self.convert_expression(expression) + ", "
         function_invocation_string = function_invocation_string.rstrip(", ")
         if function_invocation.function_name in ConfigReader.config["scypher"]["function_name"]:
             function_invocation_string = "scypher." + function_invocation.function_name + '(' + function_invocation_string + ')'

@@ -15,12 +15,12 @@ class GraphConverter:
         for index, relationship in enumerate(path.relationships):
             # 生成关系模式
             relationship_pattern, relationship_time_window_info = self.match_relationship(relationship)
-            path_pattern = path_pattern + relationship_pattern
+            path_pattern += relationship_pattern
             if relationship_time_window_info:
                 path_time_window_info.append(relationship_time_window_info)
             # 生成节点模式
             node_pattern, node_property_patterns, node_time_window_info = self.match_object_node(path.nodes[index + 1])
-            path_pattern = path_pattern + node_pattern
+            path_pattern += node_pattern
             property_patterns.extend(node_property_patterns)
             if node_time_window_info:
                 path_time_window_info.extend(node_time_window_info)
@@ -54,12 +54,11 @@ class GraphConverter:
             node.variable = self.variables_manager.get_random_variable()
         node_pattern = node.variable
         for label in node.labels:
-            node_pattern = node_pattern + ':' + label
+            node_pattern += ':' + label
         if node.__class__ == PropertyNode:
-            node_pattern = node_pattern + "{content: \"" + node.content + "\"}"
+            node_pattern += "{content: \"" + node.content + "\"}"
         elif node.__class__ == ValueNode:
-            node_pattern = node_pattern + "{content: " + self.expression_converter.convert_expression(
-                node.content) + '}'
+            node_pattern += "{content: " + self.expression_converter.convert_expression(node.content) + '}'
         node_pattern = '(' + node_pattern + ')'
 
         # 节点的有效时间限制
@@ -77,29 +76,29 @@ class GraphConverter:
         relationship_pattern = relationship.variable
         for index, label in enumerate(relationship.labels):
             if index == 0:
-                relationship_pattern = relationship_pattern + ':'
+                relationship_pattern += ':'
             else:
-                relationship_pattern = relationship_pattern + '|'
+                relationship_pattern += '|'
             relationship_pattern = relationship_pattern + label
         if relationship.length[0] != 1 or relationship.length[1] != 1:
-            relationship_pattern = relationship_pattern + '*'
+            relationship_pattern += '*'
             if relationship.length[0] is not None or relationship.length[1] is not None:
                 if relationship.length[0] == relationship.length[1]:
-                    relationship_pattern = relationship_pattern + str(relationship.length[0])
+                    relationship_pattern += str(relationship.length[0])
                 else:
                     if relationship.length[0]:
-                        relationship_pattern = relationship_pattern + str(relationship.length[0])
-                    relationship_pattern = relationship_pattern + ".."
+                        relationship_pattern += str(relationship.length[0])
+                    relationship_pattern += ".."
                     if relationship.length[1]:
                         relationship_pattern = relationship_pattern + str(relationship.length[1])
         if len(relationship.properties) != 0:
-            relationship_pattern = relationship_pattern + '{'
+            relationship_pattern += '{'
             for index, (property_name, property_value) in enumerate(relationship.properties.items()):
                 if index != 0:
-                    relationship_pattern = relationship_pattern + ", "
+                    relationship_pattern += ", "
                 property_value_string = self.expression_converter.convert_expression(property_value)
-                relationship_pattern = relationship_pattern + property_name + " : " + property_value_string
-            relationship_pattern = relationship_pattern + '}'
+                relationship_pattern += property_name + " : " + property_value_string
+            relationship_pattern += '}'
         if relationship_pattern != "":
             relationship_pattern = "-[" + relationship_pattern + "]-"
         else:
@@ -107,7 +106,7 @@ class GraphConverter:
         if relationship.direction == SRelationship.LEFT:
             relationship_pattern = '<' + relationship_pattern
         elif relationship.direction == SRelationship.RIGHT:
-            relationship_pattern = relationship_pattern + '>'
+            relationship_pattern += '>'
 
         # 关系的有效时间限制
         if relationship.time_window:
@@ -139,7 +138,7 @@ class GraphConverter:
             for index, relationship in enumerate(path.relationships):
                 relationship_pattern = self.create_relationship(relationship, path.nodes[index], path.nodes[index + 1],
                                                                 time_window)
-                path_pattern = path_pattern + relationship_pattern + '(' + path.nodes[index + 1].variable + ')'
+                path_pattern += relationship_pattern + '(' + path.nodes[index + 1].variable + ')'
             if path.variable:
                 path_pattern = path.variable + " = " + path_pattern
         else:
@@ -164,12 +163,12 @@ class GraphConverter:
         node_pattern = node.variable
         # 添加节点标签
         for label in node.labels:
-            node_pattern = node_pattern + ':' + label
+            node_pattern += ':' + label
         # 添加节点内容
         if node.__class__ == PropertyNode:
-            node_pattern = node_pattern + "{content: \"" + node.content + "\""
+            node_pattern += "{content: \"" + node.content + "\""
         elif node.__class__ == ValueNode:
-            node_pattern = node_pattern + "{content: " + self.expression_converter.convert_expression(node.content)
+            node_pattern += "{content: " + self.expression_converter.convert_expression(node.content)
         # 添加节点有效时间
         if node.time_window:
             node_effective_time = {"from": "scypher.timePoint(" + self.expression_converter.convert_time_point_literal(
@@ -185,17 +184,26 @@ class GraphConverter:
                 "to": "scypher.timePoint(\"NOW\")"
             }
         else:
-            node_effective_time = {"from": "scypher.operateTime()", "to": "scypher.timePoint(\"NOW\")"}
-        if node.__class__ == ObjectNode:
-            node_pattern = node_pattern + "{intervalFrom: " + node_effective_time["from"] + ", intervalTo: " + \
-                           node_effective_time["to"] + "}"
-        elif node.__class__ in [PropertyNode, ValueNode]:
-            # 调用函数检查属性节点和值节点的有效时间是否满足约束
             if parent_node:
-                node_pattern = node_pattern + ", intervalFrom: scypher.getIntervalFromOfSubordinateNode(" + \
-                               parent_node.variable + ", " + node_effective_time["from"] + "), "
-                node_pattern = node_pattern + "intervalTo: scypher.getIntervalToOfSubordinateNode(" + \
-                               parent_node.variable + ", " + node_effective_time["to"] + ")}"
+                node_effective_time = {"from": parent_node.variable + ".intervalFrom",
+                                       "to": parent_node.variable + ".intervalTo"}
+            else:
+                node_effective_time = {"from": "scypher.operateTime()", "to": "scypher.timePoint(\"NOW\")"}
+        if node.__class__ == ObjectNode:
+            node_pattern += "{intervalFrom: " + node_effective_time["from"] + ", intervalTo: " + node_effective_time[
+                "to"] + '}'
+        elif node.__class__ in [PropertyNode, ValueNode]:
+            if parent_node:
+                if node.time_window or operate_time:
+                    # 调用函数检查属性节点和值节点的有效时间是否满足约束
+                    node_pattern += ", intervalFrom: scypher.getIntervalFromOfSubordinateNode(" + \
+                                    parent_node.variable + ", " + node_effective_time["from"] + "), "
+                    node_pattern += "intervalTo: scypher.getIntervalToOfSubordinateNode(" + \
+                                    parent_node.variable + ", " + node_effective_time["to"] + ")}"
+                else:
+                    # 有效时间和父节点一致
+                    node_pattern += ", intervalFrom: " + node_effective_time["from"] + ", "
+                    node_pattern += "intervalTo: " + node_effective_time["to"] + "}"
             else:
                 raise TranslateError("The value nodes and property nodes must have their parent node")
 
@@ -217,11 +225,11 @@ class GraphConverter:
             relationship_pattern = ""
         # 添加关系的标签
         for label in relationship.labels:
-            relationship_pattern = relationship_pattern + ':' + label
+            relationship_pattern += ':' + label
         # 添加关系的属性
-        relationship_pattern = relationship_pattern + '{'
+        relationship_pattern += '{'
         for property_key, property_value in relationship.properties.items():
-            relationship_pattern = relationship_pattern + property_key + ": " + self.expression_converter.convert_expression(
+            relationship_pattern += property_key + ": " + self.expression_converter.convert_expression(
                 property_value) + ", "
         if relationship.time_window:
             relationship_effective_time = {
@@ -241,16 +249,16 @@ class GraphConverter:
         else:
             relationship_effective_time = {"from": "scypher.operateTime()", "to": "scypher.timePoint(\"NOW\")"}
         # getIntervalFromOfRelationship和getIntervalToOfRelationship用于检查关系的有效时间是否符合约束，以及是否有重复关系
-        relationship_pattern = relationship_pattern + "intervalFrom: scypher.getIntervalFromOfRelationship(" + start_node.variable + ", " + end_node.variable + ", \"" + \
-                               relationship.labels[0] + "\", \"" + relationship.direction + "\", " + \
-                               relationship_effective_time["from"] + "), "
-        relationship_pattern = relationship_pattern + "intervalTo: scypher.getIntervalToOfRelationship(" + start_node.variable + ", " + end_node.variable + ", \"" + \
-                               relationship.labels[0] + "\", \"" + relationship.direction + "\", " + \
-                               relationship_effective_time["to"] + ")}"
+        relationship_pattern += "intervalFrom: scypher.getIntervalFromOfRelationship(" + start_node.variable + ", " + end_node.variable + ", \"" + \
+                                relationship.labels[0] + "\", \"" + relationship.direction + "\", " + \
+                                relationship_effective_time["from"] + "), "
+        relationship_pattern += "intervalTo: scypher.getIntervalToOfRelationship(" + start_node.variable + ", " + end_node.variable + ", \"" + \
+                                relationship.labels[0] + "\", \"" + relationship.direction + "\", " + \
+                                relationship_effective_time["to"] + ")}"
         relationship_pattern = '-[' + relationship_pattern + ']-'
         if relationship.direction == SRelationship.LEFT:
             relationship_pattern = '<' + relationship_pattern
         elif relationship.direction == SRelationship.RIGHT:
-            relationship_pattern = relationship_pattern + '>'
+            relationship_pattern += '>'
 
         return relationship_pattern
