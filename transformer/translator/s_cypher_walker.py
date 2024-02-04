@@ -560,11 +560,13 @@ class SCypherWalker(s_cypherListener):
     def exitOC_Properties(self, ctx: s_cypherParser.OC_PropertiesContext):
         # oC_MapLiteral | oC_Parameter
         if ctx.oC_MapLiteral() is not None:
-            self.rel_properties = self.map_literal
+            self.rel_properties = self.map_literal.keys_values
             self.map_literal = None  # 退出清空
         elif ctx.oC_Parameter() is not None:
             # TODO:oC_Parameter未处理
             pass
+        else:
+            self.rel_properties = None
 
     def exitOC_RelationshipDetail(self, ctx: s_cypherParser.OC_RelationshipDetailContext):
         # direction: str,
