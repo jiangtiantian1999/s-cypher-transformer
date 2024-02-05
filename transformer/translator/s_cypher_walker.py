@@ -106,17 +106,18 @@ class SCypherWalker(s_cypherListener):
         self.left_expression = Stack()
         self.right_expression = Stack()
         self.where_expression = Stack()
-        self.case_expression = Stack()
         self.parenthesized_expression = Stack()
         self.function_invocation = Stack()
         self.function_invocation_expressions = Stack()
         self.list_literal_expressions = Stack()
+        self.case_condition_expressions = Stack()
+        self.case_result_expressions = Stack()
 
         # Atom
         self.atom = None
         self.list_literal = None
         self.map_literal = None
-        # self.case_expression = None
+        self.case_expression = Stack()
         self.list_comprehension = None
         self.pattern_comprehension = None
         self.quantifier = None
@@ -393,7 +394,6 @@ class SCypherWalker(s_cypherListener):
         if ctx.oC_ExplicitProcedureInvocation() is not None:
             input_items = self.explicit_input_items.pop()
         else:
-            # tmp = self.explicit_input_items.pop()
             input_items = None
         # 检查*
         if '*' in ctx.getText():
@@ -410,9 +410,6 @@ class SCypherWalker(s_cypherListener):
 
     def exitOC_ExplicitProcedureInvocation(self, ctx: s_cypherParser.OC_ExplicitProcedureInvocationContext):
         self.is_explicit = False
-
-    # def enterS_ExplicitExpression(self, ctx: s_cypherParser.S_ExplicitExpressionContext):
-    #     self.explicit_input_items.push([])
 
     def exitS_ExplicitExpression(self, ctx: s_cypherParser.S_ExplicitExpressionContext):
         self.explicit_input_items.peek().append(self.expression.pop())
@@ -1047,7 +1044,6 @@ class SCypherWalker(s_cypherListener):
             atom = Atom(self.map_literal)
             self.map_literal = None
         elif ctx.oC_CaseExpression() is not None:
-            # TODO
             atom = Atom(self.case_expression.pop())
         elif ctx.oC_ListComprehension() is not None:
             atom = Atom(self.list_comprehension)
@@ -1089,6 +1085,36 @@ class SCypherWalker(s_cypherListener):
         else:
             atom = Atom(ctx.getText())
         self.atom = atom
+
+    def exitOC_CaseExpression(self, ctx: s_cypherParser.OC_CaseExpressionContext):
+        # expression=None,
+        # conditions: List = None, (List[Expression])
+        # results: List = None (List[Expression])
+        if self.expression.is_empty() is False:
+            # ELSE语句中的expression
+            expression = self.expression.pop()
+        else:
+            raise ParseError("Expect expression but there is none in expression stack.")
+        if ctx.oC_CaseAlternative() is not None:
+            conditions = self.case_condition_expressions.pop()
+            results = self.case_result_expressions.pop()
+        else:
+            conditions = None
+            results = None
+        self.case_expression.push(CaseExpression(expression, conditions, results))
+
+    def enterOC_CaseAlternative(self, ctx: s_cypherParser.OC_CaseAlternativeContext):
+        self.case_condition_expressions.push([])
+        self.case_result_expressions.push([])
+
+    def exitOC_CaseAlternative(self, ctx: s_cypherParser.OC_CaseAlternativeContext):
+        if self.expression.size() % 2 != 0:
+            # THEN语句中的expression
+            self.case_result_expressions.peek().append(self.expression.pop())
+            # WHEN语句中的expression
+            self.case_condition_expressions.peek().append(self.expression.pop())
+        else:
+            raise ParseError("The sizes of condition and result expressions in the expression stack is not matched.")
 
     def exitOC_ListComprehension(self, ctx: s_cypherParser.OC_ListComprehensionContext):
         # variable: str,
@@ -1515,7 +1541,7 @@ class Stack(object):
         if self.items:
             return self.items[len(self.items) - 1]
         else:
-            raise IndexError("从空栈执行弹出栈顶元素操作")
+            raise IndexError("Peek from an empty stack.")
 
     def peek_is_empty(self):
         if self.items:
@@ -1533,4 +1559,4 @@ class Stack(object):
         if self.items:
             return self.items.pop()
         else:
-            raise IndexError("从空栈执行出栈操作")
+            raise IndexError("Pop from an empty stack.")
