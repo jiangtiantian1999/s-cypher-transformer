@@ -2,7 +2,7 @@ import random
 import pandas as pd
 import scipy.stats as stats
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta, date
 
 from neo4j import BoltDriver
 from tqdm import tqdm
@@ -36,7 +36,7 @@ class AmazonDataSet:
         review_df = pd.read_csv("amazon/amazon-review.csv", header=None, dtype=str).fillna("NULL")[[1, 2, 3, 4, 5, 6]]
         product_df = pd.read_csv("amazon/amazon-product.csv", header=None, dtype=str).fillna("NULL")[
             [1, 2, 3, 4, 5, 6, 7, 8]]
-        customer_df = pd.read_csv("amazon/amazon-customer.csv", header=None, dtype=str).fillna("NULL")[[1]]
+        customer_df = pd.read_csv("amazon/amazon-customer.csv", header=None, dtype=str)[[1]].dropna()
         copurchases_df = pd.read_csv("amazon/amazon-copurchases.csv", header=None, dtype=str).fillna("NULL")[
             [1, 2]].drop_duplicates()
         review_df.columns = ["date", "customer", "product", "rating", "votes", "helpful"]
@@ -45,7 +45,7 @@ class AmazonDataSet:
         customer_df.columns = ["id"]
         copurchases_df.columns = ["sources_id", "dest_id"]
 
-        # 设置Review的开始时间
+        # 设置Review的开始时间和purchase时间
         review_df["date"] = review_df["date"].apply(
             lambda date: datetime(int(date.split("-")[0]), int(date.split("-")[1]), int(date.split("-")[2]),
                                   tzinfo=timezone.utc))
@@ -54,36 +54,58 @@ class AmazonDataSet:
             review_df.shape[0], random_state=seed) + 1) / 2 * 60 * 60 * 24
         review_df["start_time"] = review_df.apply(
             lambda review: datetime.fromtimestamp(review["date"].timestamp() + review["time"], tz=timezone.utc), axis=1)
-        review_df = review_df.drop(["date", "time"], axis=1)
+        # 设置purchase时间，早于review的开始时间，时间差分布~N(0.5, 1)，范围>=0，峰值在14天
+        # 具体时间符合分布~N(0.4, 0.3^2)，范围[0, 60*60*24]，峰值在19点
+        review_df["diff"] = (stats.truncnorm(-1 - 0.5, 300, 0.5, 1).rvs(review_df.shape[0],
+                                                                        random_state=seed) + 1) / 2 * 14
+        review_df["time"] = (stats.truncnorm((-1 - 0.4) / 0.3, (1 - 0.4) / 0.3, 0.4, 0.3).rvs(
+            review_df.shape[0], random_state=seed + 1) + 1) / 2 * 60 * 60 * 24
+        review_df["purchase_time"] = review_df.apply(
+            lambda review: datetime.fromtimestamp(
+                (review["date"] - timedelta(days=review["diff"])).timestamp() + review["time"], tz=timezone.utc),
+            axis=1)
+        review_df = review_df.drop(["date", "time", "diff"], axis=1)
 
-        # 设置Product的开始时间，早于最早的评论的开始时间，时间差分布~N(1, 1)，范围>=0，峰值在21天
+        # 设置Product的开始时间，早于最早的评论的purchase时间，时间差分布~N(1, 1)，范围>=0，峰值在7天
+        # 具体时间符合分布~N(0.3, 0.3^2)，范围[0, 60*60*24]，峰值在14点30
         product_df["start_time"] = None
-        diff = (stats.truncnorm(-2 - 1, 300, 1, 1).rvs(customer_df.shape[0],
-                                                       random_state=seed) + 2) / 4 * 21 * 60 * 60 * 24
+        diff = (stats.truncnorm(-2 - 1, 300, 1, 1).rvs(customer_df.shape[0], random_state=seed) + 2) / 4 * 14
+        time_of_day = (stats.truncnorm((-1 - 0.3) / 0.3, (1 - 0.3) / 0.3, 0.3, 0.3).rvs(
+            review_df.shape[0], random_state=seed) + 1) / 2 * 60 * 60 * 24
         for index, product in product_df.iterrows():
             product_reviews = review_df[review_df["product"] == product["id"]]
             if product_reviews.size == 0:
-                # 对于没有被评论过的product，认为其开始时间为2006年的前几年的某一时刻
+                # 对于没有被评论过的product，认为其开始时间为1994年7月5日~2006年1月1日的某一时刻
+                diff[index] = random.randint(0, (date(2006, 1, 1) - date(1994, 7, 5)).days)
                 start_time = datetime.fromtimestamp(
-                    datetime(2006, 1, 1, tzinfo=timezone.utc).timestamp() - diff[index] * 100, tz=timezone.utc)
+                    (datetime(2006, 1, 1) - timedelta(days=diff[index])).timestamp() + time_of_day[index],
+                    tz=timezone.utc)
             else:
-                start_time = datetime.fromtimestamp(min(product_reviews["start_time"]).timestamp() - diff[index],
-                                                    tz=timezone.utc)
+                start_time = datetime.fromtimestamp(
+                    (min(product_reviews["purchase_time"]).replace(hour=0, minute=0, second=0,
+                                                                   microsecond=0) - timedelta(
+                        days=diff[index])).timestamp() + time_of_day[index], tz=timezone.utc)
             product_df["start_time"][index] = start_time
 
-        # 设置Customer的开始时间，早于最早的评论的开始时间，时间差分布~N(0.5, 1)，范围>=0，峰值在14天
+        # 设置Customer的开始时间，早于最早的评论purchase时间，时间差分布~N(0.5, 1)，范围>=0，峰值在7天
+        # 具体时间符合分布~N(0.4, 0.3^2)，范围[0, 60*60*24]，峰值在19点
         customer_df["start_time"] = None
-        diff = (stats.truncnorm(-1 - 0.5, 300, 0.5, 1).rvs(customer_df.shape[0],
-                                                           random_state=seed) + 1) / 2 * 14 * 60 * 60 * 24
+        diff = (stats.truncnorm(-1 - 0.5, 300, 0.5, 1).rvs(customer_df.shape[0], random_state=seed) + 1) / 2 * 7
+        time_of_day = (stats.truncnorm((-1 - 0.4) / 0.3, (1 - 0.4) / 0.3, 0.4, 0.3).rvs(
+            review_df.shape[0], random_state=seed + 2) + 1) / 2 * 60 * 60 * 24
         for index, customer in customer_df.iterrows():
             customer_reviews = review_df[review_df["customer"] == customer["id"]]
             if customer_reviews.size == 0:
-                # 对于没有发表过评论的customer，认为其开始时间为2006年的前几年的某一时刻
+                # 对于没有发表过评论的customer，认为其开始时间为1994年7月5日~2006年1月1日的某一时刻
+                diff[index] = random.randint(0, (date(2006, 1, 1) - date(1994, 7, 5)).days)
                 start_time = datetime.fromtimestamp(
-                    datetime(2006, 1, 1, tzinfo=timezone.utc).timestamp() - diff[index] * 150, tz=timezone.utc)
+                    (datetime(2006, 1, 1) - timedelta(days=diff[index])).timestamp() + time_of_day[index],
+                    tz=timezone.utc)
             else:
-                start_time = datetime.fromtimestamp(min(customer_reviews["start_time"]).timestamp() - diff[index],
-                                                    tz=timezone.utc)
+                start_time = datetime.fromtimestamp(
+                    (min(customer_reviews["purchase_time"]).replace(hour=0, minute=0, second=0,
+                                                                    microsecond=0) - timedelta(
+                        days=diff[index])).timestamp() + time_of_day[index], tz=timezone.utc)
             customer_df["start_time"][index] = start_time
 
         # 设置Tag, 以及Product和Tag的关系
@@ -129,13 +151,13 @@ class AmazonDataSet:
         # 创建Tag节点和Tag节点之间的边isSubTagOf
         for index, tag in tqdm(tag_df.iterrows(), desc="Create Tag Node", total=tag_df.shape[0]):
             s_cypher_query = "CREATE (:Tag{id: " + tag["id"] + ", name: \"" + tag["name"] + "\"}) " + \
-                             "AT TIME timePoint('1994')"
+                             "AT TIME timePoint('1994-07-05')"
             cypher_query = STransformer.transform(s_cypher_query)
             self.driver.execute_query(cypher_query)
             if tag["upper_tag"] != []:
                 s_cypher_query = "MATCH (upperTag:Tag), (lowerTag:Tag{id: " + tag["id"] + "}) " + \
                                  "WHERE upperTag.id IN " + convert_list_to_str(tag["upper_tag"]) + \
-                                 "CREATE (upperTag)<-[:isSubTagOf]-(lowerTag) AT TIME timePoint('1994')\n"
+                                 "CREATE (upperTag)<-[:isSubTagOf]-(lowerTag) AT TIME timePoint('1994-07-05')\n"
                 cypher_query = STransformer.transform(s_cypher_query)
                 self.driver.execute_query(cypher_query)
 
@@ -144,7 +166,7 @@ class AmazonDataSet:
             s_cypher_query = "CREATE (:Product{id: " + product["id"] + ", ASIN: \"" + product["ASIN"] + "\", title:\"" + \
                              product["title"].replace("\"", "\\\"") + "\", group: \"" + product[
                                  "group"] + "\", avgRating: " + product["avg_rating"] + "}) " + \
-                             "AT TIME timePoint(" + product["start_time"].strftime("\"%Y-%m-%dT%H%M%S.%n\"") + ')'
+                             "AT TIME timePoint(" + product["start_time"].strftime("\"%Y-%m-%dT%H%M%S.%f\"") + ')'
             cypher_query = STransformer.transform(s_cypher_query)
             self.driver.execute_query(cypher_query)
             if product["categories"] != []:
@@ -160,7 +182,7 @@ class AmazonDataSet:
             s_cypher_query = "MATCH (p1:Product{id: " + copurchase["sources_id"] + "}), (p2:Product{id: " + copurchase[
                 "dest_id"] + "}) CREATE (p1)-[:CoPurchases]->(p2) AT TIME scypher.timePoint(" + max(
                 product_df[product_df["id"].isin([copurchase["sources_id"], copurchase["dest_id"]])][
-                    "start_time"]).strftime("\"%Y-%m-%dT%H%M%S.%n\"") + ')'
+                    "start_time"]).strftime("\"%Y-%m-%dT%H%M%S.%f\"") + ')'
             cypher_query = STransformer.transform(s_cypher_query)
             self.driver.execute_query(cypher_query)
 
@@ -168,16 +190,16 @@ class AmazonDataSet:
         country_list = ["US", "Japan", "Germany", "UK", "India", "Italy", "France", "Brazil", "Canada", "Spain",
                         "Mexico", "Australia", "Turkey", "Netherlands"]
         for country in tqdm(country_list, desc="Create Country Node"):
-            s_cypher_query = "CREATE (:Country{name:\"" + country + "\"}) AT TIME scypher.timePoint('1994')"
+            s_cypher_query = "CREATE (:Country{name:\"" + country + "\"}) AT TIME scypher.timePoint('1994-07-05')"
             cypher_query = STransformer.transform(s_cypher_query)
-            self.driver.execute_query(cypher_query)
+            # self.driver.execute_query(cypher_query)
 
         # 创建Customer节点，及其和Country节点之间的边isLocatedIn
         for index, customer in tqdm(customer_df.iterrows(), desc="Create Customer Node", total=customer_df.shape[0]):
             s_cypher_query = "MATCH (c:Country{name: \"" + country_list[random.randint(0, len(country_list) - 1)] + \
                              "\"}) CREATE (:Customer{id: \"" + customer["id"] + "\"})-[:isLocatedIn]->(c) " + \
                              "AT TIME scypher.timePoint(" + customer["start_time"].strftime(
-                "\"%Y-%m-%dT%H%M%S.%n\"") + ')'
+                "\"%Y-%m-%dT%H%M%S.%f\"") + ')'
             cypher_query = STransformer.transform(s_cypher_query)
             self.driver.execute_query(cypher_query)
 
@@ -191,24 +213,29 @@ class AmazonDataSet:
             knows_list.append(customers)
             random_time = random.uniform(max(customer_df[customer_df["id"].isin(customers)]["start_time"]).timestamp(),
                                          datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp())
-            start_time_str = datetime.fromtimestamp(random_time, tz=timezone.utc).strftime("\"%Y-%m-%dT%H%M%S.%n\"")
+            start_time_str = datetime.fromtimestamp(random_time, tz=timezone.utc).strftime("\"%Y-%m-%dT%H%M%S.%f\"")
             if random.randint(-3, 9) > 0:
                 # 3/4的可能结束时间为NOW
                 end_time_str = "NOW"
             else:
                 random_time = random.uniform(random_time, datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp())
-                end_time_str = datetime.fromtimestamp(random_time, tz=timezone.utc).strftime("\"%Y-%m-%dT%H%M%S.%n\"")
+                end_time_str = datetime.fromtimestamp(random_time, tz=timezone.utc).strftime("\"%Y-%m-%dT%H%M%S.%f\"")
             s_cypher_query = "MATCH (s:Customer{id: \"" + customers[0] + "\"}), (d:Customer{id: \"" + customers[1] + \
                              "\"}) CREATE (s)-[:knows@T(" + start_time_str + ", " + end_time_str + ")]->(d)"
             cypher_query = STransformer.transform(s_cypher_query)
             self.driver.execute_query(cypher_query)
 
-        # 建立Review节点，及其和Product节点和Customer节点之间的边containerOf和creatorOf
+        # 建立Review节点，及其和Product节点和Customer节点之间的边containerOf和creatorOf，以及Product节点和Customer节点之间的边purchases
         for index, review in tqdm(review_df.iterrows(), desc="Create Review Node", total=review_df.shape[0]):
-            s_cypher_query = "MATCH (p:Product{id: " + review["product"] + "}), (c:Customer{id: \"" + review[
-                "customer"] + "\"}) CREATE (p)-[:containerOf]->(:Review{rating: " + review["rating"] + ", votes: " + \
+            purchases_start_time = review["purchase_time"].strftime("\"%Y-%m-%dT%H%M%S.%f\"")
+            purchases_end_time = (review["purchase_time"] + timedelta(microseconds=1)).strftime(
+                "\"%Y-%m-%dT%H%M%S.%f\"")
+            print(purchases_start_time, purchases_end_time)
+            s_cypher_query = "MATCH (p:Product{id: " + review["product"] + "}), (c:Customer{id: \"" + review["customer"] \
+                             + "\"}) CREATE (p)-[:containerOf]->(:Review{rating: " + review["rating"] + ", votes: " + \
                              review["votes"] + ", helpful: " + review["helpful"] + "})<-[:creatorOf]-(c)" + \
-                             "AT TIME timePoint(" + review["start_time"].strftime("\"%Y-%m-%dT%H%M%S.%n\"") + ')'
+                             "AT TIME timePoint(" + review["start_time"].strftime("\"%Y-%m-%dT%H%M%S.%f\"") + \
+                             ") CREATE (c)-[:purchases@T(" + purchases_start_time + ", " + purchases_end_time + ")]->(p)"
             cypher_query = STransformer.transform(s_cypher_query)
             self.driver.execute_query(cypher_query)
 
@@ -216,5 +243,5 @@ class AmazonDataSet:
 # graphdb_connector = GraphDBConnector()
 # graphdb_connector.default_connect()
 # amazon_dataset = AmazonDataSet(graphdb_connector.driver)
-# amazon_dataset.rebuild()
+# amazon_dataset.initialize()
 # graphdb_connector.close()
