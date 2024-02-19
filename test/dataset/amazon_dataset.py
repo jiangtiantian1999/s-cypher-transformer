@@ -227,15 +227,12 @@ class AmazonDataSet:
 
         # 建立Review节点，及其和Product节点和Customer节点之间的边containerOf和creatorOf，以及Product节点和Customer节点之间的边purchases
         for index, review in tqdm(review_df.iterrows(), desc="Create Review Node", total=review_df.shape[0]):
-            purchases_start_time = review["purchase_time"].strftime("\"%Y-%m-%dT%H%M%S.%f\"")
-            purchases_end_time = (review["purchase_time"] + timedelta(microseconds=1)).strftime(
-                "\"%Y-%m-%dT%H%M%S.%f\"")
-            print(purchases_start_time, purchases_end_time)
+            purchases_time = review["purchase_time"].strftime("\"%Y-%m-%dT%H%M%S.%f\"")
             s_cypher_query = "MATCH (p:Product{id: " + review["product"] + "}), (c:Customer{id: \"" + review["customer"] \
                              + "\"}) CREATE (p)-[:containerOf]->(:Review{rating: " + review["rating"] + ", votes: " + \
                              review["votes"] + ", helpful: " + review["helpful"] + "})<-[:creatorOf]-(c)" + \
                              "AT TIME timePoint(" + review["start_time"].strftime("\"%Y-%m-%dT%H%M%S.%f\"") + \
-                             ") CREATE (c)-[:purchases@T(" + purchases_start_time + ", " + purchases_end_time + ")]->(p)"
+                             ") CREATE (c)-[:purchases@T(" + purchases_time + ", " + purchases_time + ")]->(p)"
             cypher_query = STransformer.transform(s_cypher_query)
             self.driver.execute_query(cypher_query)
 
