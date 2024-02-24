@@ -54,15 +54,15 @@ class AmazonDataSet:
             review_df.shape[0], random_state=seed) + 1) / 2 * 60 * 60 * 24
         review_df["start_time"] = review_df.apply(
             lambda review: datetime.fromtimestamp(review["date"].timestamp() + review["time"], tz=timezone.utc), axis=1)
-        # 设置purchase时间，早于review的开始时间，时间差分布~N(0.5, 1)，范围>=0，峰值在14天
+        # 设置purchase时间，早于review的开始时间，时间差分布~N(-0.8, 1)，范围[5, 30]，峰值在6天
         # 具体时间符合分布~N(0.4, 0.3^2)，范围[0, 60*60*24]，峰值在19点
-        review_df["diff"] = (stats.truncnorm(-1 - 0.5, 300, 0.5, 1).rvs(review_df.shape[0],
-                                                                        random_state=seed) + 1) / 2 * 14
+        review_df["diff"] = (stats.truncnorm(-1 + 0.8, 4 + 0.8, 0.5, 1).rvs(review_df.shape[0],
+                                                                            random_state=seed) + 2) * 5
         review_df["time"] = (stats.truncnorm((-1 - 0.4) / 0.3, (1 - 0.4) / 0.3, 0.4, 0.3).rvs(
             review_df.shape[0], random_state=seed + 1) + 1) / 2 * 60 * 60 * 24
         review_df["purchase_time"] = review_df.apply(
             lambda review: datetime.fromtimestamp(
-                (review["date"] - timedelta(days=review["diff"])).timestamp() + review["time"], tz=timezone.utc),
+                (review["date"] - timedelta(days=int(review["diff"]))).timestamp() + review["time"], tz=timezone.utc),
             axis=1)
         review_df = review_df.drop(["date", "time", "diff"], axis=1)
 
@@ -192,7 +192,7 @@ class AmazonDataSet:
         for country in tqdm(country_list, desc="Create Country Node"):
             s_cypher_query = "CREATE (:Country{name:\"" + country + "\"}) AT TIME scypher.timePoint('1994-07-05')"
             cypher_query = STransformer.transform(s_cypher_query)
-            # self.driver.execute_query(cypher_query)
+            self.driver.execute_query(cypher_query)
 
         # 创建Customer节点，及其和Country节点之间的边isLocatedIn
         for index, customer in tqdm(customer_df.iterrows(), desc="Create Customer Node", total=customer_df.shape[0]):
