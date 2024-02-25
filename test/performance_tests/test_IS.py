@@ -35,7 +35,7 @@ class TestIS(TestCase):
         durations = np.random.randint(0, (date(2000, 1, 1) - date(1995, 1, 1)).days, test_size)
         cls.start_times = [date(1995, 1, 1) + timedelta(days=int(duration)) for duration in durations]
         # 持续时间范围：[0, 6years]
-        durations = np.random.randint(0, (date(2006, 1, 1) - date(2000, 1, 1)).days, test_size)
+        durations = np.random.randint(0, 6 * 365, test_size)
         # 结束时间范围：[1995-01-01, 2006-01-01]
         cls.end_times = [start_time + timedelta(days=int(durations[index])) for index, start_time in
                          enumerate(cls.start_times)]
