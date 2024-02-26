@@ -1093,6 +1093,10 @@ class SCypherWalker(s_cypherListener):
             atom = Atom(ctx.getText())
         self.atom = atom
 
+    def enterOC_CaseExpression(self, ctx: s_cypherParser.OC_CaseExpressionContext):
+        self.case_condition_expressions.push([])
+        self.case_result_expressions.push([])
+
     def exitOC_CaseExpression(self, ctx: s_cypherParser.OC_CaseExpressionContext):
         # expression=None,
         # conditions: List = None, (List[Expression])
@@ -1116,10 +1120,6 @@ class SCypherWalker(s_cypherListener):
             self.case_result_expression_single = self.expression.pop()
         else:
             raise ParseError("Expect expression but there is none in expression stack.")
-
-    def enterOC_CaseAlternative(self, ctx: s_cypherParser.OC_CaseAlternativeContext):
-        self.case_condition_expressions.push([])
-        self.case_result_expressions.push([])
 
     def exitOC_CaseAlternative(self, ctx: s_cypherParser.OC_CaseAlternativeContext):
         if self.expression.size() % 2 == 0:
