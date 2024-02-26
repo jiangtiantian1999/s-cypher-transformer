@@ -40,7 +40,7 @@ class SCypherWalker(s_cypherListener):
         self.pattern_element = None  # SPath
         self.path_function_pattern = None  # TemporalPathCall
         self.rel_type_names = []  # 边标签
-        self.rel_length_range = None  # 边长度区间
+        self.rel_length_range = Stack()  # 边长度区间
         self.pattern_part_list = []
         self.single_path_pattern = None
 
@@ -156,6 +156,7 @@ class SCypherWalker(s_cypherListener):
         self.is_property_look_up_time = False
         self.is_set = False
         self.is_remove = False
+        self.is_rel_range = False
 
     def exitOC_Query(self, ctx: s_cypherParser.OC_QueryContext):
         if ctx.oC_RegularQuery():
@@ -580,7 +581,7 @@ class SCypherWalker(s_cypherListener):
         else:
             interval = None
         if ctx.oC_RangeLiteral() is not None:
-            length_tuple = self.rel_length_range
+            length_tuple = self.rel_length_range.pop()
         else:
             length_tuple = (1, 1)
         labels = self.rel_type_names
@@ -588,6 +589,9 @@ class SCypherWalker(s_cypherListener):
         properties = self.rel_properties
         self.rel_properties = None  # 退出清空
         self.relationship_pattern = SRelationship('UNDIRECTED', variable, labels, length_tuple, interval, properties)
+
+    def enterOC_RangeLiteral(self, ctx:s_cypherParser.OC_RangeLiteralContext):
+        self.is_rel_range = True
 
     def exitOC_RangeLiteral(self, ctx: s_cypherParser.OC_RangeLiteralContext):
         lengths = self.integer_literals
@@ -609,10 +613,12 @@ class SCypherWalker(s_cypherListener):
         else:
             # * -> (None, None)
             length_tuple = (None, None)
-        self.rel_length_range = length_tuple
+        self.rel_length_range.push(length_tuple)
+        self.is_rel_range = False
 
     def exitOC_IntegerLiteral(self, ctx: s_cypherParser.OC_IntegerLiteralContext):
-        self.integer_literals.append(ctx.getText())
+        if self.is_rel_range:
+            self.integer_literals.append(ctx.getText())
 
     def exitOC_RelTypeName(self, ctx: s_cypherParser.OC_RelTypeNameContext):
         self.rel_type_names.append(ctx.getText())
