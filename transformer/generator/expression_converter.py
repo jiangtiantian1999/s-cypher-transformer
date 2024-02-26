@@ -230,12 +230,12 @@ class ExpressionConverter:
         case_expression_string = "CASE "
         if case_expression.expression:
             case_expression_string += self.convert_expression(case_expression.expression)
-        for index, condition in case_expression.conditions:
+        for index, condition in enumerate(case_expression.conditions):
             case_expression_string += "\nWHEN " + self.convert_expression(
                 condition) + " THEN " + self.convert_expression(case_expression.results[index])
         if len(case_expression.conditions) + 1 == len(case_expression.results):
-            case_expression_string += "\nELSE " + self.convert_expression(case_expression.results[-1]) + " END"
-        return case_expression_string
+            case_expression_string += "\nELSE " + self.convert_expression(case_expression.results[-1])
+        return case_expression_string + " END"
 
     def convert_list_comprehension(self, list_comprehension: ListComprehension) -> str:
         list_comprehension_string = list_comprehension.variable + " IN " + self.convert_expression(
