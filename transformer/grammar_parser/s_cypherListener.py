@@ -1,4 +1,4 @@
-# Generated from s_cypher.g4 by ANTLR 4.13.0
+# Generated from transformer/grammar_parser/s_cypher.g4 by ANTLR 4.13.0
 from antlr4 import *
 if "." in __name__:
     from .s_cypherParser import s_cypherParser
@@ -491,6 +491,24 @@ class s_cypherListener(ParseTreeListener):
 
     # Exit a parse tree produced by s_cypherParser#s_RightExpression.
     def exitS_RightExpression(self, ctx:s_cypherParser.S_RightExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by s_cypherParser#oC_CaseExpression.
+    def enterOC_CaseExpression(self, ctx:s_cypherParser.OC_CaseExpressionContext):
+        pass
+
+    # Exit a parse tree produced by s_cypherParser#oC_CaseExpression.
+    def exitOC_CaseExpression(self, ctx:s_cypherParser.OC_CaseExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by s_cypherParser#s_ResultExpression.
+    def enterS_ResultExpression(self, ctx:s_cypherParser.S_ResultExpressionContext):
+        pass
+
+    # Exit a parse tree produced by s_cypherParser#s_ResultExpression.
+    def exitS_ResultExpression(self, ctx:s_cypherParser.S_ResultExpressionContext):
         pass
 
 
@@ -1121,15 +1139,6 @@ class s_cypherListener(ParseTreeListener):
 
     # Exit a parse tree produced by s_cypherParser#oC_Atom.
     def exitOC_Atom(self, ctx:s_cypherParser.OC_AtomContext):
-        pass
-
-
-    # Enter a parse tree produced by s_cypherParser#oC_CaseExpression.
-    def enterOC_CaseExpression(self, ctx:s_cypherParser.OC_CaseExpressionContext):
-        pass
-
-    # Exit a parse tree produced by s_cypherParser#oC_CaseExpression.
-    def exitOC_CaseExpression(self, ctx:s_cypherParser.OC_CaseExpressionContext):
         pass
 
 

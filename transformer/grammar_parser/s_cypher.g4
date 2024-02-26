@@ -137,6 +137,11 @@ s_LeftExpression : oC_Expression ;
 
 s_RightExpression : oC_Expression ;
 
+oC_CaseExpression
+              :  ( ( CASE ( SP? oC_CaseAlternative )+ ) | ( CASE SP? s_ResultExpression ( SP? oC_CaseAlternative )+ ) ) ( SP? ELSE SP? oC_Expression )? SP? END ;
+
+s_ResultExpression : oC_Expression ;
+
 oC_PropertyOrLabelsExpression : oC_Atom ( SP? oC_PropertyLookup )* ( SP? ( oC_NodeLabels | s_PoundTElement ) )? ;
 
 s_PoundTExpression : oC_Atom ( SP? oC_PropertyLookup )* ( s_PropertyLookupName ( SP? ( PoundValue | s_PoundTElement ) )? )? SP? s_PropertyLookupTime ;

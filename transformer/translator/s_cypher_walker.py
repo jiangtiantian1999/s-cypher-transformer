@@ -112,6 +112,7 @@ class SCypherWalker(s_cypherListener):
         self.list_literal_expressions = Stack()
         self.case_condition_expressions = Stack()
         self.case_result_expressions = Stack()
+        self.case_result_expression_single = None
 
         # Atom
         self.atom = None
@@ -590,7 +591,7 @@ class SCypherWalker(s_cypherListener):
         self.rel_properties = None  # 退出清空
         self.relationship_pattern = SRelationship('UNDIRECTED', variable, labels, length_tuple, interval, properties)
 
-    def enterOC_RangeLiteral(self, ctx:s_cypherParser.OC_RangeLiteralContext):
+    def enterOC_RangeLiteral(self, ctx: s_cypherParser.OC_RangeLiteralContext):
         self.is_rel_range = True
 
     def exitOC_RangeLiteral(self, ctx: s_cypherParser.OC_RangeLiteralContext):
@@ -1098,9 +1099,10 @@ class SCypherWalker(s_cypherListener):
         # results: List = None (List[Expression])
         if self.expression.is_empty() is False:
             # ELSE语句中的expression
-            expression = self.expression.pop()
+            expression = self.case_result_expression_single
+            self.case_result_expression_single = None
         else:
-            raise ParseError("Expect expression but there is none in expression stack.")
+            expression = None
         if ctx.oC_CaseAlternative() is not None:
             conditions = self.case_condition_expressions.pop()
             results = self.case_result_expressions.pop()
@@ -1109,12 +1111,18 @@ class SCypherWalker(s_cypherListener):
             results = None
         self.case_expression.push(CaseExpression(expression, conditions, results))
 
+    def exitS_ResultExpression(self, ctx: s_cypherParser.S_ResultExpressionContext):
+        if self.expression.is_empty() is False:
+            self.case_result_expression_single = self.expression.pop()
+        else:
+            raise ParseError("Expect expression but there is none in expression stack.")
+
     def enterOC_CaseAlternative(self, ctx: s_cypherParser.OC_CaseAlternativeContext):
         self.case_condition_expressions.push([])
         self.case_result_expressions.push([])
 
     def exitOC_CaseAlternative(self, ctx: s_cypherParser.OC_CaseAlternativeContext):
-        if self.expression.size() % 2 != 0:
+        if self.expression.size() % 2 == 0:
             # THEN语句中的expression
             self.case_result_expressions.peek().append(self.expression.pop())
             # WHEN语句中的expression
