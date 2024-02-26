@@ -1101,18 +1101,19 @@ class SCypherWalker(s_cypherListener):
         # expression=None,
         # conditions: List = None, (List[Expression])
         # results: List = None (List[Expression])
-        if self.expression.is_empty() is False:
-            # ELSE语句中的expression
-            expression = self.case_result_expression_single
-            self.case_result_expression_single = None
-        else:
-            expression = None
+        # case中的单个expression
+        expression = self.case_result_expression_single
+        self.case_result_expression_single = None
         if ctx.oC_CaseAlternative() is not None:
             conditions = self.case_condition_expressions.pop()
             results = self.case_result_expressions.pop()
         else:
             conditions = None
             results = None
+        # ELSE语句中的expression
+        if ctx.oC_Expression() is not None:
+            else_expression = self.expression.pop()
+            results.append(else_expression)
         self.case_expression.push(CaseExpression(expression, conditions, results))
 
     def exitS_ResultExpression(self, ctx: s_cypherParser.S_ResultExpressionContext):
