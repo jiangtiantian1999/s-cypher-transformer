@@ -69,7 +69,7 @@ class TestIS(TestCase):
         # result_df = pd.DataFrame()
         result_df = pd.read_csv(os.path.join("results", "IS_2_records.csv"), index_col=[0, 1])
         start_persons = [index[0] for index in result_df.index.values]
-        for index, start_person in enumerate(self.start_persons):
+        for start_person in self.start_persons:
             s_cypher = "MATCH (n:Customer{id: \"" + start_person + "\"})-[:creatorOf]->(re:Review)<-[:containerOf]-(p:Product) " + \
                        "MATCH (p)-[:hasTag]->(t:Tag)" \
                        "RETURN re.rating as rating, re.votes as votes, p.id as product, t.name as tag " \
@@ -92,7 +92,7 @@ class TestIS(TestCase):
         result_df["datetime"] = result_df["datetime"].apply(
             lambda dt: datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f000%z"))
         start_persons = [index[0] for index in result_df.index.values]
-        for index, start_person in enumerate(self.start_persons):
+        for start_person in self.start_persons:
             s_cypher = "MATCH (n:Customer{id: \"" + start_person + "\"})-[e:knows]->(m:Customer) " + \
                        "RETURN m.id as friend, e@T.from as datetime"
             cypher_query = STransformer.transform(s_cypher)
@@ -113,7 +113,7 @@ class TestIS(TestCase):
         result_df["createTime"] = result_df["createTime"].apply(
             lambda dt: datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%f000%z"))
         products = [index[0] for index in result_df.index.values]
-        for index, product in enumerate(self.products):
+        for product in self.products:
             s_cypher = "MATCH (p:Product{id: " + str(product) + "}) " + \
                        "RETURN p.id as id, p.title as title, p@T.from as createTime"
             cypher_query = STransformer.transform(s_cypher)
@@ -132,7 +132,7 @@ class TestIS(TestCase):
         # result_df = pd.DataFrame()
         result_df = pd.read_csv(os.path.join("results", "IS_5_records.csv"), index_col=[0, 1])
         products = [index[0] for index in result_df.index.values]
-        for index, product in enumerate(self.products):
+        for product in self.products:
             s_cypher = "MATCH (p:Product{id: " + str(product) + "})-[:hasTag]->(t:Tag) " + \
                        "RETURN p.id as product, t.name as tag"
             cypher_query = STransformer.transform(s_cypher)
@@ -151,7 +151,7 @@ class TestIS(TestCase):
         # result_df = pd.DataFrame()
         result_df = pd.read_csv(os.path.join("results", "IS_6_records.csv"), index_col=[0, 1])
         products = [index[0] for index in result_df.index.values]
-        for index, product in enumerate(self.products):
+        for product in self.products:
             s_cypher = "MATCH (p:Product{id: " + str(
                 product) + "})-[:containerOf]->(re:Review)<-[:creatorOf]-(n:Customer) " + \
                        "RETURN p.id as product, re.rating as rating, n.id as customer"
@@ -171,7 +171,7 @@ class TestIS(TestCase):
         # result_df = pd.DataFrame()
         result_df = pd.read_csv(os.path.join("results", "IS_7_records.csv"), index_col=[0, 1])
         products = [index[0] for index in result_df.index.values]
-        for index, product in enumerate(self.products):
+        for product in self.products:
             s_cypher = "MATCH (p1:Product{id: " + str(product) + "})-[:CoPurchases]->(p2:Product) " + \
                        "OPTIONAL MATCH (p1)<-[:purchases]-(n:Customer)-[:purchases]->(p2)" \
                        "RETURN p1.id as product1, p2.id as product2, count(n) as coCustomer"
