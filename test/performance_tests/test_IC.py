@@ -188,7 +188,7 @@ class TestIC(TestCase):
         # result_df = pd.DataFrame()
         result_df = pd.read_csv(os.path.join("results", "IC_7_records.csv"), index_col=[0, 1])
         start_persons = [index[0] for index in result_df.index.values]
-        for index, start_person in enumerate(self.start_persons):
+        for start_person in self.start_persons:
             s_cypher = "MATCH (n:Customer{id: \"" + start_person + "\"})-[:purchases]->(p:Product) " + \
                        "MATCH (m:Customer)-[:creatorOf]->(re:Review)<-[:containerOf]-(p) " \
                        "WITH n, m, re@T.from as reviewTime " \
@@ -211,7 +211,7 @@ class TestIC(TestCase):
         # result_df = pd.DataFrame()
         result_df = pd.read_csv(os.path.join("results", "IC_8_records.csv"), index_col=[0, 1])
         start_persons = [index[0] for index in result_df.index.values]
-        for index, start_person in enumerate(self.start_persons):
+        for start_person in self.start_persons:
             s_cypher = "MATCH (n:Customer{id: \"" + start_person + "\"})-[:purchases]->(p:Product)" + \
                        "MATCH (re:Review)<-[:containerOf]-(p:Product) " \
                        "RETURN re.rating as rating, re.votes as votes ORDER BY re@T.from DESC LIMIT 20"
@@ -234,8 +234,8 @@ class TestIC(TestCase):
         for index, start_person in enumerate(self.start_persons):
             end_time = self.end_times[index].strftime("\"%Y-%m-%d\"")
             s_cypher = "MATCH (n:Customer{id: \"" + start_person + "\"})-[:knows*1..2]->(m:Customer)-[:creatorOf]->(re:Review)<-[:containerOf]-(p:Product)" + \
-                       "WHERE re@T.from < timePoint(" + end_time + ") "\
-                       "RETURN p.id as products ORDER BY re@T.from DESC LIMIT 10"
+                       "WHERE re@T.from < timePoint(" + end_time + ") " \
+                                                                   "RETURN p.id as products ORDER BY re@T.from DESC LIMIT 10"
             cypher_query = STransformer.transform(s_cypher)
             records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
             if start_person in start_persons:
