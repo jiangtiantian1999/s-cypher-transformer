@@ -540,7 +540,6 @@ class ClauseConverter:
         return remove_clause_string.rstrip(", ")
 
     def convert_return_clause(self, return_clause: ReturnClause) -> str:
-        print(self.variables_manager.user_variables)
         return_clause_string = "RETURN "
         if return_clause.is_distinct:
             return_clause_string = "RETURN DISTINCT "
