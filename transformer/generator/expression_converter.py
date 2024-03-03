@@ -1,12 +1,12 @@
 from transformer.conf.config_reader import ConfigReader
-from transformer.generator.variables_manager import VariablesManager
 from transformer.ir.s_expression import *
 from transformer.ir.s_graph import *
 
 
 class ExpressionConverter:
 
-    def __init__(self, variables_manager: VariablesManager):
+    # variables_manager 为VariablesManager类型
+    def __init__(self, variables_manager=None):
         self.variables_manager = variables_manager
 
     def convert_expression(self, expression: Expression) -> str:
@@ -190,8 +190,9 @@ class ExpressionConverter:
     def convert_atom(self, atom: Atom) -> str:
         particle = atom.particle
         if particle.__class__ == str:
-            if particle.upper() == "NOW" and particle not in self.variables_manager.user_variables:
-                particle = "\"NOW\""
+            if particle.upper() == "NOW":
+                if self.variables_manager and particle not in self.variables_manager.user_variables:
+                    particle = "\"NOW\""
             return particle
         elif particle.__class__ == ListLiteral:
             return self.convert_list_literal(particle)

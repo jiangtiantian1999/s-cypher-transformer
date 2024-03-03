@@ -540,6 +540,7 @@ class ClauseConverter:
         return remove_clause_string.rstrip(", ")
 
     def convert_return_clause(self, return_clause: ReturnClause) -> str:
+        print(self.variables_manager.user_variables)
         return_clause_string = "RETURN "
         if return_clause.is_distinct:
             return_clause_string = "RETURN DISTINCT "
@@ -552,7 +553,7 @@ class ClauseConverter:
             for variable in self.variables_manager.user_variables:
                 if variable not in property_item_expression_string_list:
                     return_clause_string = return_clause_string + variable + ", "
-            return_clause_string.rstrip(", ")
+            return_clause_string = return_clause_string.rstrip(", ")
         for index, projection_item in enumerate(return_clause.projection_items):
             if index != 0:
                 return_clause_string = return_clause_string + ", "

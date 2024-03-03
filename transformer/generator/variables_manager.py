@@ -3,7 +3,7 @@ from transformer.ir.s_graph import *
 
 
 class VariablesManager:
-    def __init__(self):
+    def __init__(self, expression_converter):
         self.count_num = 99
         # 当前有效的用户定义的变量名
         self.user_variables = []
@@ -11,6 +11,7 @@ class VariablesManager:
         self.updating_variables = {}
         # union连接的各个语句的返回变量
         self.union_variables = []
+        self.expression_converter = expression_converter
 
     # 获取新的变量名
     def get_random_variable(self) -> str:
@@ -53,36 +54,50 @@ class VariablesManager:
             self.update_pattern_variables(updating_clause.updating_clause.pattern, True)
 
     def update_with_clause_variables(self, with_clause: WithClause):
-        if with_clause.is_all is None:
+        if with_clause.is_all is False:
             self.clear()
         for projection_item in with_clause.projection_items:
             if projection_item.variable:
-                self.user_variables.append(projection_item.variable)
+                if projection_item.variable not in self.user_variables:
+                    self.user_variables.append(projection_item.variable)
+            else:
+                expression_str = self.expression_converter.convert_expression(projection_item.expression)
+                if expression_str not in self.user_variables:
+                    self.user_variables.append(expression_str)
 
     def update_return_clause_variables(self, return_clause: ReturnClause):
         self.clear()
         for projection_item in return_clause.projection_items:
-            if projection_item.variable:
-                self.user_variables.append(projection_item.variable)
+            if projection_item.variable :
+                if projection_item.variable not in self.user_variables:
+                    self.user_variables.append(projection_item.variable)
+            else:
+                expression_str = self.expression_converter.convert_expression(projection_item.expression)
+                if expression_str not in self.user_variables:
+                    self.user_variables.append(expression_str)
 
     def update_pattern_variables(self, pattern: Pattern, is_updating=False):
         pattern = pattern.pattern
         if pattern.__class__ == SPath:
             self.update_path_variables(pattern, is_updating)
         elif pattern.__class__ == TemporalPathCall:
-            self.user_variables.append(pattern.variable)
+            if pattern.variable not in self.user_variables:
+                self.user_variables.append(pattern.variable)
 
     def update_path_variables(self, path: SPath, is_updating=False):
         if path.variable:
-            self.user_variables.append(path.variable)
+            if path.variable not in self.user_variables:
+                self.user_variables.append(path.variable)
         for object_node in path.nodes:
             if object_node.variable:
                 if is_updating and object_node.variable not in self.user_variables:
                     self.updating_variables[object_node.variable] = False
-                self.user_variables.append(object_node.variable)
+                if object_node.variable not in self.user_variables:
+                    self.user_variables.append(object_node.variable)
 
         for edge in path.relationships:
             if edge.variable:
                 if is_updating and edge.variable not in self.user_variables:
                     self.updating_variables[edge.variable] = False
-                self.user_variables.append(edge.variable)
+                if edge.variable not in self.user_variables:
+                    self.user_variables.append(edge.variable)
