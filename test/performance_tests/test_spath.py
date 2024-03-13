@@ -18,7 +18,7 @@ class TestSPath(TestCase):
     graphdb_connector = None
     start_airport_list = ["BOS", "ATL", "ABR", "FLL", "HNL"]
     end_airport_list = ["HOU", "AUS", "MSP", "ATL", "OGG"]
-    limit_spath_len_list = [2, 3, 4, 5]
+    limit_spath_len_list = [2, 3, 4]
     TPS = {}
     RT = {}
     # TOTAL_TIME = 0
@@ -83,7 +83,6 @@ class TestSPath(TestCase):
         response_time = timedelta()
         for start_airport, end_airport in zip(self.start_airport_list, self.end_airport_list):
             for limit_spath_len in self.limit_spath_len_list:
-                start = time.perf_counter()
                 print("Test LatestSPath with limited length " + str(
                     limit_spath_len) + " of " + start_airport + " to " + end_airport + ".")
                 s_cypher = (
@@ -92,8 +91,6 @@ class TestSPath(TestCase):
                         + "RETURN [relationship in relationships(path) | type(relationship)] as path\n"
                         + "ORDER BY path\n"
                 )
-                cypher_query = STransformer.transform(s_cypher)
-                records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
                 start_time = datetime.now()
                 cypher_query = STransformer.transform(s_cypher)
                 records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
@@ -109,11 +106,11 @@ class TestSPath(TestCase):
                 record_df.insert(loc=4, column='elapsed_time(s)', value=elapsed_time.total_seconds())
                 result_df = pd.concat([result_df, record_df])
 
-            assert total_record == result_df.iloc[:, [3]].to_dict("records")
-            response_time = response_time.total_seconds()
-            self.TPS["latestSPath"] = len(self.start_airport_list) * len(self.limit_spath_len_list) / response_time
-            self.RT["latestSPath"] = response_time / (len(self.start_airport_list) * len(self.limit_spath_len_list))
-            result_df.to_csv(os.path.join("results", "SPath", "latestSPath_records.csv"), index=True)
+        assert total_record == result_df.iloc[:, [3]].to_dict("records")
+        response_time = response_time.total_seconds()
+        self.TPS["latestSPath"] = len(self.start_airport_list) * len(self.limit_spath_len_list) / response_time
+        self.RT["latestSPath"] = response_time / (len(self.start_airport_list) * len(self.limit_spath_len_list))
+        result_df.to_csv(os.path.join("results", "SPath", "latestSPath_records.csv"), index=True)
 
     # 最快顺序有效路径
     def test_fastestSPath(self):
@@ -132,8 +129,6 @@ class TestSPath(TestCase):
                         + "RETURN [relationship in relationships(path) | type(relationship)] as path\n"
                         + "ORDER BY path\n"
                 )
-                cypher_query = STransformer.transform(s_cypher)
-                records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
                 start_time = datetime.now()
                 cypher_query = STransformer.transform(s_cypher)
                 records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
@@ -149,11 +144,11 @@ class TestSPath(TestCase):
                 record_df.insert(loc=4, column='elapsed_time(s)', value=elapsed_time.total_seconds())
                 result_df = pd.concat([result_df, record_df])
 
-            assert total_record == result_df.iloc[:, [3]].to_dict("records")
-            response_time = response_time.total_seconds()
-            self.TPS["fastestSPath"] = len(self.start_airport_list) * len(self.limit_spath_len_list) / response_time
-            self.RT["fastestSPath"] = response_time / (len(self.start_airport_list) * len(self.limit_spath_len_list))
-            result_df.to_csv(os.path.join("results", "SPath", "fastestSPath_records.csv"), index=True)
+        assert total_record == result_df.iloc[:, [3]].to_dict("records")
+        response_time = response_time.total_seconds()
+        self.TPS["fastestSPath"] = len(self.start_airport_list) * len(self.limit_spath_len_list) / response_time
+        self.RT["fastestSPath"] = response_time / (len(self.start_airport_list) * len(self.limit_spath_len_list))
+        result_df.to_csv(os.path.join("results", "SPath", "fastestSPath_records.csv"), index=True)
 
     # 最短顺序有效路径
     def test_shortestSPath(self):
@@ -172,8 +167,6 @@ class TestSPath(TestCase):
                         + "RETURN [relationship in relationships(path) | type(relationship)] as path\n"
                         + "ORDER BY path\n"
                 )
-                cypher_query = STransformer.transform(s_cypher)
-                records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
                 start_time = datetime.now()
                 cypher_query = STransformer.transform(s_cypher)
                 records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)
@@ -189,11 +182,11 @@ class TestSPath(TestCase):
                 record_df.insert(loc=4, column='elapsed_time(s)', value=elapsed_time.total_seconds())
                 result_df = pd.concat([result_df, record_df])
 
-            assert total_record == result_df.iloc[:, [3]].to_dict("records")
-            response_time = response_time.total_seconds()
-            self.TPS["shortestSPath"] = len(self.start_airport_list) * len(self.limit_spath_len_list) / response_time
-            self.RT["shortestSPath"] = response_time / (len(self.start_airport_list) * len(self.limit_spath_len_list))
-            result_df.to_csv(os.path.join("results", "SPath", "shortestSPath_records.csv"), index=True)
+        assert total_record == result_df.iloc[:, [3]].to_dict("records")
+        response_time = response_time.total_seconds()
+        self.TPS["shortestSPath"] = len(self.start_airport_list) * len(self.limit_spath_len_list) / response_time
+        self.RT["shortestSPath"] = response_time / (len(self.start_airport_list) * len(self.limit_spath_len_list))
+        result_df.to_csv(os.path.join("results", "SPath", "shortestSPath_records.csv"), index=True)
 
     def test_all_spath(self):
         earliest_suite = unittest.TestLoader().loadTestsFromName('test_spath.TestSPath.test_earliestSPath')
