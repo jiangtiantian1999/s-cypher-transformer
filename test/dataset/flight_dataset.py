@@ -75,8 +75,8 @@ class FlightDataSet:
         self.create_flights()
 
 
-graphdb_connector = GraphDBConnector()
-graphdb_connector.default_connect()
-flight_dataset = FlightDataSet(graphdb_connector.driver)
-flight_dataset.rebuild()
-graphdb_connector.close()
+# graphdb_connector = GraphDBConnector()
+# graphdb_connector.default_connect()
+# flight_dataset = FlightDataSet(graphdb_connector.driver)
+# flight_dataset.rebuild()
+# graphdb_connector.close()
