@@ -22,7 +22,7 @@ class AmazonDataSet:
         self.driver = driver
         pd.set_option('display.max_columns', None)
         self.seed = 2024
-        random.seed = self.seed
+        random.seed(self.seed)
         np.random.seed(self.seed)
         Faker.seed(self.seed)
         self.review_df = pd.read_csv("amazon/amazon-review.csv", header=None, dtype=str).fillna("NULL")[
@@ -53,15 +53,18 @@ class AmazonDataSet:
         self.driver.execute_query(cypher_query)
 
     def generate(self):
+        print("Generating...")
         self.knows_count *= 10
-        self.generate_count = 9 * self.product_df.shape[0]
+        self.generate_count = 20 * self.product_df.shape[0]
         fk = Faker()
         letters_digists = string.ascii_uppercase + string.digits
+        print("Generating products...")
         # 生成product
         new_product_df = pd.DataFrame(None, columns=["id", "ASIN", "title", "group", "categories", "total_reviews",
                                                      "downloaded_reviews", "avg_rating"])
         # 生成id
         new_product_df["id"] = range(self.product_df.shape[0], self.product_df.shape[0] + self.generate_count)
+        new_product_df["id"] = new_product_df.apply(lambda product: str(product["id"]), axis=1)
         # 生成ASIN
         for index in range(self.generate_count):
             while True:
@@ -80,15 +83,21 @@ class AmazonDataSet:
         new_product_df["total_reviews"] = np.random.choice(range(2000), self.generate_count)
         new_product_df["downloaded_reviews"] = new_product_df.apply(
             lambda product: random.choice(range(product["total_reviews"] + 1)), axis=1)
+        new_product_df["total_reviews"] = new_product_df.apply(lambda product: str(product["total_reviews"]), axis=1)
+        new_product_df["downloaded_reviews"] = new_product_df.apply(lambda product: str(product["downloaded_reviews"]),
+                                                                    axis=1)
         # 生成avg_rating
         new_product_df["avg_rating"] = np.random.choice(range(51), self.generate_count) / 10
+        new_product_df["avg_rating"] = new_product_df.apply(lambda product: str(product["avg_rating"]), axis=1)
         self.product_df = pd.concat([self.product_df, new_product_df], ignore_index=True)
-
+        print("Generating copurchases...")
         # 生成copurchases
         new_copurchases_df = pd.DataFrame(None, columns=["sources_id", "dest_id"])
         for index in range(self.generate_count // 2):
             while True:
                 (source_id, dest_id) = np.random.choice(range(self.product_df.shape[0]), 2)
+                source_id = str(source_id)
+                dest_id = str(dest_id)
                 if self.copurchases_df[(self.copurchases_df["sources_id"] == source_id) & (
                         self.copurchases_df["dest_id"] == dest_id)].size == 0 and \
                         new_copurchases_df[(new_copurchases_df["sources_id"] == source_id) &
@@ -97,7 +106,7 @@ class AmazonDataSet:
                     new_copurchases_df.loc[len(new_copurchases_df)] = [dest_id, source_id]
                     break
         self.copurchases_df = pd.concat([self.copurchases_df, new_copurchases_df], ignore_index=True)
-
+        print("Generating customers...")
         # 生成customer
         new_customer_df = pd.DataFrame(None, columns=["id"])
         for index in range(self.generate_count):
@@ -107,7 +116,7 @@ class AmazonDataSet:
                     break
             new_customer_df.loc[index, "id"] = id
         self.customer_df = pd.concat([self.customer_df, new_customer_df], ignore_index=True)
-
+        print("Generating reviews...")
         # 生成review
         new_review_df = pd.DataFrame(None, columns=["date", "customer", "product", "rating", "votes", "helpful"])
         # 生成date
@@ -119,12 +128,16 @@ class AmazonDataSet:
             new_review_df.loc[index, "customer"] = self.customer_df.loc[position, "id"]
         # 生成product
         new_review_df["product"] = np.random.choice(range(self.product_df.shape[0]), self.generate_count)
+        new_review_df["product"] = new_review_df.apply(lambda review: str(review["product"]), axis=1)
         # 生成rating
         new_review_df["rating"] = np.random.choice(range(6), self.generate_count)
+        new_review_df["rating"] = new_review_df.apply(lambda review: str(review["rating"]), axis=1)
         # 生成votes
         new_review_df["votes"] = np.random.choice(range(200), self.generate_count) / 10000
+        new_review_df["votes"] = new_review_df.apply(lambda review: str(review["votes"]), axis=1)
         # 生成helpful
         new_review_df["helpful"] = np.random.choice(range(200), self.generate_count) / 10000
+        new_review_df["helpful"] = new_review_df.apply(lambda review: str(review["helpful"]), axis=1)
         self.review_df = pd.concat([self.review_df, new_review_df], ignore_index=True)
 
     def initialize(self):
@@ -327,6 +340,7 @@ class AmazonDataSet:
 # graphdb_connector = GraphDBConnector()
 # graphdb_connector.default_connect()
 # amazon_dataset = AmazonDataSet(graphdb_connector.driver)
+# amazon_dataset.clear()
 # amazon_dataset.generate()
 # amazon_dataset.initialize()
 # graphdb_connector.close()
