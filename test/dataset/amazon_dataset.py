@@ -54,7 +54,7 @@ class AmazonDataSet:
 
     def generate(self):
         print("Generating...")
-        self.knows_count *= 10
+        self.knows_count *= 20
         self.generate_count = 20 * self.product_df.shape[0]
         fk = Faker()
         letters_digists = string.ascii_uppercase + string.digits
