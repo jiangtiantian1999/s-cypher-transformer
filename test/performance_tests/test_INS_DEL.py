@@ -24,6 +24,9 @@ class TestINSDEL(TestCase):
     INS_RT = {}
     DEL_TPS = {}
     DEL_RT = {}
+    # 是否在已拓展的数据集上查询
+    is_expanded = False
+    root = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -66,6 +69,10 @@ class TestINSDEL(TestCase):
         # 结束时间范围：[1995-01-01, 2006-01-01]
         cls.end_times = [start_time + timedelta(days=int(cls.durations[index])) for index, start_time in
                          enumerate(cls.start_times)]
+        if cls.is_expanded:
+            cls.root = os.path.join("results", "expanded")
+        else:
+            cls.root = os.path.join("results", "original")
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -74,11 +81,11 @@ class TestINSDEL(TestCase):
         cls.INS_TPS["AVG"] = np.mean(list(cls.INS_TPS.values()))
         cls.INS_RT["AVG"] = np.mean(list(cls.INS_RT.values()))
         results = pd.DataFrame.from_dict({"TPS": cls.INS_TPS, "RT": cls.INS_RT})
-        results.to_csv(os.path.join("results", "INS_results.csv"))
+        results.to_csv(os.path.join(cls.root, "INS_results.csv"))
         cls.DEL_TPS["AVG"] = np.mean(list(cls.DEL_TPS.values()))
         cls.DEL_RT["AVG"] = np.mean(list(cls.DEL_RT.values()))
         results = pd.DataFrame.from_dict({"TPS": cls.DEL_TPS, "RT": cls.DEL_RT})
-        results.to_csv(os.path.join("results", "DEL_results.csv"))
+        results.to_csv(os.path.join(cls.root, "DEL_results.csv"))
 
     # 添加顾客节点，通过isLocatedIn连接到网络/删除顾客节点及其边，和其评论节点及其边
     def test_INS_DEL_1(self):
