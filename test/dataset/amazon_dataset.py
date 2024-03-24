@@ -174,16 +174,18 @@ class AmazonDataSet:
                 # 对于没有被评论过的product，认为其开始时间为1994年7月5日~2006年1月1日的某一时刻
                 diff[index] = random.randint(0, (date(2006, 1, 1) - date(1994, 7, 5)).days)
                 start_time = datetime.fromtimestamp(
-                    (datetime(2006, 1, 1) - timedelta(days=diff[index])).timestamp() + time_of_day[index],
-                    tz=timezone.utc)
+                    (datetime(2006, 1, 1, tzinfo=timezone.utc) - timedelta(days=diff[index])).timestamp() + time_of_day[
+                        index], tz=timezone.utc)
             else:
+                min_purchase_time = min(product_reviews["purchase_time"])
                 start_time = datetime.fromtimestamp(
-                    (min(product_reviews["purchase_time"]).replace(hour=0, minute=0, second=0,
-                                                                   microsecond=0) - timedelta(
+                    (min_purchase_time.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(
                         days=diff[index])).timestamp() + time_of_day[index], tz=timezone.utc)
+                if start_time > min_purchase_time:
+                    start_time -= timedelta(days=1)
             self.product_df["start_time"][index] = start_time
 
-        # 设置Customer的开始时间，早于最早的评论purchase时间，时间差分布~N(0.5, 1)，范围>=0，峰值在7天
+        # 设置Customer的开始时间，早于最早的评论的purchase时间，时间差分布~N(0.5, 1)，范围>=0，峰值在7天
         # 具体时间符合分布~N(0.4, 0.3^2)，范围[0, 60*60*24]，峰值在19点
         self.customer_df["start_time"] = None
         diff = (stats.truncnorm(-1 - 0.5, 300, 0.5, 1).rvs(self.customer_df.shape[0],
@@ -196,13 +198,15 @@ class AmazonDataSet:
                 # 对于没有发表过评论的customer，认为其开始时间为1994年7月5日~2006年1月1日的某一时刻
                 diff[index] = random.randint(0, (date(2006, 1, 1) - date(1994, 7, 5)).days)
                 start_time = datetime.fromtimestamp(
-                    (datetime(2006, 1, 1) - timedelta(days=diff[index])).timestamp() + time_of_day[index],
-                    tz=timezone.utc)
+                    (datetime(2006, 1, 1, tzinfo=timezone.utc) - timedelta(days=diff[index])).timestamp() + time_of_day[
+                        index], tz=timezone.utc)
             else:
-                start_time = datetime.fromtimestamp(
-                    (min(customer_reviews["purchase_time"]).replace(hour=0, minute=0, second=0,
-                                                                    microsecond=0) - timedelta(
-                        days=diff[index])).timestamp() + time_of_day[index], tz=timezone.utc)
+                min_purchase_time = min(customer_reviews["purchase_time"])
+                start_time = datetime.fromtimestamp((min_purchase_time.replace(hour=0, minute=0, second=0,
+                                                                               microsecond=0) - timedelta(
+                    days=diff[index])).timestamp() + time_of_day[index], tz=timezone.utc)
+                if start_time > min_purchase_time:
+                    start_time -= timedelta(days=1)
             self.customer_df["start_time"][index] = start_time
 
         # 设置Tag, 以及Product和Tag的关系
@@ -330,7 +334,7 @@ class AmazonDataSet:
             purchases_time = review["purchase_time"].strftime("\"%Y-%m-%dT%H%M%S.%f\"")
             s_cypher_query = "MATCH (p:Product{id: " + review["product"] + "}), (c:Customer{id: \"" + review["customer"] \
                              + "\"}) CREATE (p)-[:containerOf]->(:Review{rating: " + review["rating"] + ", votes: " + \
-                             review["votes"] + ", helpful: " + review["helpful"] + "})<-[:creatorOf]-(c)" + \
+                             review["votes"] + ", helpful: " + review["helpful"] + "})<-[:creatorOf]-(c) " + \
                              "AT TIME timePoint(" + review["start_time"].strftime("\"%Y-%m-%dT%H%M%S.%f\"") + \
                              ") CREATE (c)-[:purchases@T(" + purchases_time + ", " + purchases_time + ")]->(p)"
             cypher_query = STransformer.transform(s_cypher_query)
