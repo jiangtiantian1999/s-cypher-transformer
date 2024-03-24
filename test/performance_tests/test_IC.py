@@ -19,7 +19,7 @@ class TestIC(TestCase):
     TPS = {}
     RT = {}
     # 是否在已拓展的数据集上查询
-    is_expanded = False
+    is_expanded = True
     # 是否在验证
     is_asserting = True
     root = None
@@ -348,8 +348,8 @@ class TestIC(TestCase):
         for index, start_person in enumerate(self.start_persons):
             end_time = self.end_times[index].strftime("\"%Y-%m-%d\"")
             s_cypher = "MATCH (n:Customer{id: \"" + start_person + "\"})-[:knows*1..2]->(m:Customer)-[:creatorOf]->(re:Review)<-[:containerOf]-(p:Product)" + \
-                       "WHERE re@T.from < timePoint(" + end_time + ") " \
-                                                                   "RETURN p.id as products ORDER BY re@T.from DESC LIMIT 10"
+                       "WHERE re@T.from < timePoint(" + end_time + ") " + \
+                       "RETURN p.id as products ORDER BY re@T.from DESC LIMIT 10"
             start_time = datetime.now()
             cypher_query = STransformer.transform(s_cypher)
             records, summary, keys = self.graphdb_connector.driver.execute_query(cypher_query)

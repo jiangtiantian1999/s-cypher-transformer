@@ -14,6 +14,7 @@ if __name__ == '__main__':
     suite.addTest(IS_suite)
     suite.addTest(INS_DEL_suite)
     suite.addTest(BI_suite)
+    suite.addTest(spath_suite)
 
     runner = TextTestRunner()
     runner.run(suite)

@@ -18,7 +18,7 @@ class TestIS(TestCase):
     TPS = {}
     RT = {}
     # 是否在已拓展的数据集上查询
-    is_expanded = False
+    is_expanded = True
     # 是否在验证
     is_asserting = True
     root = None

@@ -25,7 +25,7 @@ class TestINSDEL(TestCase):
     DEL_TPS = {}
     DEL_RT = {}
     # 是否在已拓展的数据集上查询
-    is_expanded = False
+    is_expanded = True
     root = None
 
     @classmethod
