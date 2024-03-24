@@ -59,10 +59,11 @@ class TestIC(TestCase):
     def tearDownClass(cls) -> None:
         super().tearDownClass()
         cls.graphdb_connector.close()
-        cls.TPS["AVG"] = np.mean(list(cls.TPS.values()))
-        cls.RT["AVG"] = np.mean(list(cls.RT.values()))
-        results = pd.DataFrame.from_dict({"TPS": cls.TPS, "RT": cls.RT})
-        results.to_csv(os.path.join(cls.root, "IC_results.csv"))
+        if cls.is_asserting:
+            cls.TPS["AVG"] = np.mean(list(cls.TPS.values()))
+            cls.RT["AVG"] = np.mean(list(cls.RT.values()))
+            results = pd.DataFrame.from_dict({"TPS": cls.TPS, "RT": cls.RT})
+            results.to_csv(os.path.join(cls.root, "IC_results.csv"))
 
     # 特定名字的传递朋友
     def test_IC_1(self):
